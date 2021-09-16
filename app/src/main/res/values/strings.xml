@@ -1,0 +1,38 @@
+<resources>
+    <string name="about_app">About app</string>
+    <string name="about_app_content">\n
+        This app is FOSS.\n
+        Source code is available at GitHub.\n
+        \n
+        App version:\u0020
+    </string>
+    <string name="about_note">About note</string>
+    <string name="about_note_byte">\u0020byte</string>
+    <string name="about_note_file_path">File path:\n</string>
+    <string name="about_note_file_size">File size:\n</string>
+    <string name="about_note_last_modified">Last modified:\n</string>
+    <string name="action_add">Add</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_no">No</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_save">Save</string>
+    <string name="action_yes">Yes</string>
+    <string name="app_name" translatable="false">notesFT</string>
+    <string name="are_you_sure_change_dir">Are you sure you wish to change working directory?</string>
+    <string name="are_you_sure_delete">Are you sure you wish to delete</string>
+    <string name="choose_directory">Choose directory</string>
+    <string name="could_not_do_that">Could not do that</string>
+    <string name="enter_note_name">Enter note name</string>
+    <string name="new_note">New note</string>
+    <string name="please_confirm">Please confirm</string>
+    <string name="rename_note">Rename note</string>
+    <string name="same_name_note_exists">The same name note already exists!</string>
+    <string name="sample_text" translatable="false">Sample text</string>
+    <string name="unsaved_changes">Unsaved changes</string>
+    <string name="what_to_do">What would you like to do?</string>
+</resources>

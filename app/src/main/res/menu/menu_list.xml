@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.notesft.screens.list.ListFragment">
+
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:orderInCategory="1"
+        android:title="@string/action_refresh"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_choose_dir"
+        android:icon="@drawable/ic_folder"
+        android:orderInCategory="2"
+        android:title="@string/choose_directory"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_about_app"
+        android:icon="@drawable/ic_info"
+        android:orderInCategory="3"
+        android:title="@string/about_app"
+        app:showAsAction="ifRoom" />
+
+</menu>

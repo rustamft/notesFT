@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="about_app">О приложении</string>
+    <string name="about_app_content">\n
+        Это приложения является свободным ПО.\n
+        Исходный код доступен на GitHub.\n
+        \n
+        Версия приложения:\u0020
+    </string>
+    <string name="about_note">О заметке</string>
+    <string name="about_note_byte">\u0020байт</string>
+    <string name="about_note_file_path">Путь до файла:\n</string>
+    <string name="about_note_file_size">Размер файла:\n</string>
+    <string name="about_note_last_modified">Последнее изменение:\n</string>
+    <string name="action_add">Добавить</string>
+    <string name="action_apply">Применить</string>
+    <string name="action_cancel">Отменить</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_discard">Не сохранять</string>
+    <string name="action_no">Нет</string>
+    <string name="action_refresh">Обновить</string>
+    <string name="action_remove">Удалить</string>
+    <string name="action_rename">Переименовать</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_yes">Да</string>
+    <string name="are_you_sure_change_dir">Вы уверены, что хотите сменить рабочую папку?</string>
+    <string name="are_you_sure_delete">Вы уверены, что хотите удалить</string>
+    <string name="choose_directory">Выбрать папку</string>
+    <string name="could_not_do_that">Не удалось это сделать</string>
+    <string name="enter_note_name">Введите название заметки</string>
+    <string name="new_note">Новая заметка</string>
+    <string name="please_confirm">Подтвердите, пожалуйста</string>
+    <string name="rename_note">Переименовать заметку</string>
+    <string name="same_name_note_exists">Заметка с таким же названием уже существует!</string>
+    <string name="unsaved_changes">Несохраненные изменения</string>
+    <string name="what_to_do">Что вы хотите сделать?</string>
+</resources>
