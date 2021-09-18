@@ -15,6 +15,7 @@ import android.widget.EditText;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -43,16 +44,16 @@ public class EditorFragment extends Fragment {
         if (getArguments() != null) {
             mNoteName = getArguments().getString(NOTE_NAME);
         }
-        // Modify PopUp action behavior
+        // Modify PopUp (back) action behavior
         mCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (mSaveFAB.getVisibility() == View.VISIBLE) {
-                    unsavedTextAlert();
-                } else navigateBack();
+                onBackPressed();
             }
         };
         requireActivity().getOnBackPressedDispatcher().addCallback(this.mCallback);
+        // Display ActionBar back button
+        setActionBarBackEnabled(true);
     }
 
     @Override
@@ -80,6 +81,9 @@ public class EditorFragment extends Fragment {
         final int ACTION_RENAME_ID = R.id.action_rename;
         final int ACTION_ABOUT_NOTE_ID = R.id.action_about_note;
         switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
             case ACTION_RENAME_ID:
                 promptRename();
                 return true;
@@ -101,7 +105,7 @@ public class EditorFragment extends Fragment {
         mEditorViewModel.setCurrentNote(mNoteName);
         // Observe toolbar title changes
         MainActivity mainActivity = ((MainActivity) requireActivity());
-        mEditorViewModel.registerToolbarTitleObserver(mainActivity);
+        mEditorViewModel.registerActionBarTitleObserver(mainActivity);
         // Register LifeCycle observer to reset toolbar title
         getLifecycle().addObserver(mEditorViewModel);
         // Initialize save FAB
@@ -202,8 +206,32 @@ public class EditorFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * Changes the visibility of the ActionBar back button
+     * @param isEnabled whether to show the back button
+     */
+    private void setActionBarBackEnabled(boolean isEnabled) {
+        ActionBar actionBar =  ((MainActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(isEnabled);
+        }
+    }
+
+    /**
+     * Straight navigate back in stack without any checks
+     */
     private void navigateBack() {
         NavController navController = NavHostFragment.findNavController(this);
         navController.navigate(R.id.action_editorFragment_to_listFragment);
+        setActionBarBackEnabled(false);
+    }
+
+    /**
+     * Before navigating back checks if note has unsaved text and shows an alert if it does
+     */
+    private void onBackPressed() {
+        if (mSaveFAB.getVisibility() == View.VISIBLE) {
+            unsavedTextAlert();
+        } else navigateBack();
     }
 }

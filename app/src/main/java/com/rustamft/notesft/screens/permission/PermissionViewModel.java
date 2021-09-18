@@ -17,10 +17,18 @@ public class PermissionViewModel extends AndroidViewModel {
         mNotesRepository = NotesRepository.getInstance(application);
     }
 
+    /**
+     * Checks if the app has the files read/write permission.
+     * @return true if the permission is granted, otherwise - false.
+     */
     boolean hasPermission() {
         return mNotesRepository.hasPermission();
     }
 
+    /**
+     * Sets the working directory for the app.
+     * @param resultData a data result from a folder chooser intent.
+     */
     void setWorkingDir(Intent resultData) {
         mNotesRepository.setWorkingDir(resultData);
     }
