@@ -1,13 +1,7 @@
 package com.rustamft.notesft.database;
 
-import static android.content.Context.MODE_PRIVATE;
-
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.ContentResolver;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.UriPermission;
 import android.database.Cursor;
 import android.icu.text.DateFormat;
 import android.icu.text.SimpleDateFormat;
@@ -19,12 +13,11 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import com.rustamft.notesft.R;
-import com.rustamft.notesft.models.Note;
+import com.rustamft.notesft.models.File;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -33,10 +26,8 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class NotesRepository {
-    private static NotesRepository INSTANCE;
-    private final String SHARED_PREF_FILE = "com.rustamft.notesft.shared_preferences";
-    private final String WORKING_DIR_KEY = "working_dir";
     private final Application mApplication;
+    private static NotesRepository INSTANCE;
 
     private NotesRepository(@NonNull Application application) {
         mApplication = application;
@@ -50,86 +41,11 @@ public class NotesRepository {
     }
 
     /**
-     * Checks if the app has read/write permission by iterating through the app's permission list.
-     * @return true if the permission is granted, false otherwise.
-     */
-    public boolean hasPermission() {
-        // Get working dir
-        String workingDir = getWorkingDir();
-        // Check if there is saved workingDir in shared preferences
-        if (workingDir == null) {
-            return false;
-        }
-        // Check permission
-        List<UriPermission> permissionsList = mApplication.getContentResolver()
-                .getPersistedUriPermissions();
-
-        if (permissionsList.size() != 0) {
-            for (UriPermission permission : permissionsList) {
-                if (permission.getUri().toString().equals(workingDir)) {
-                    if (permission.isWritePermission() && permission.isReadPermission()) {
-                        return true;
-                    }
-                }
-            }
-        }
-        // If there is no permission
-        return false;
-    }
-
-    /**
-     * Writes the working directory to the app's SharedPreferences.
-     * @param resultData a data result from a folder chooser intent.
-     */
-    @SuppressLint("WrongConstant")
-    public void setWorkingDir(Intent resultData) {
-        Uri directoryUri = resultData.getData();
-        final int flags = resultData.getFlags()
-                & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        mApplication.getContentResolver().takePersistableUriPermission(directoryUri, flags);
-
-        String workingDir = directoryUri.toString();
-        SharedPreferences sharedPreferences = mApplication
-                .getSharedPreferences(SHARED_PREF_FILE, MODE_PRIVATE);
-        SharedPreferences.Editor preferencesEditor = sharedPreferences.edit();
-        preferencesEditor.putString(WORKING_DIR_KEY, workingDir);
-        preferencesEditor.apply();
-    }
-
-    /**
-     * Gets a working directory path stored in SharedPreferences.
-     * @return a String with the working directory path or null if there's none stored.
-     */
-    private String getWorkingDir() {
-        SharedPreferences sharedPreferences = mApplication
-                .getSharedPreferences(SHARED_PREF_FILE, MODE_PRIVATE);
-        return sharedPreferences.getString(WORKING_DIR_KEY, null);
-    }
-
-    /**
-     * Returns a file instance if the given name is correct.
-     * @param name the name of the file.
-     * @return an instance of a note file.
-     */
-    public Note getFileInstance(String name) {
-        // Check if the name is valid: has at least one letter or digit
-        char[] chars = name.toCharArray();
-        for (char c : chars) {
-            if (Character.isLetterOrDigit(c)) { // If the name is valid
-                String workingDir = getWorkingDir();
-                return new Note(mApplication, workingDir, name); // The cycle stopped
-            }
-        }
-        return null; // If the name is invalid
-    }
-
-    /**
      * Returns a name of a given file.
      * @param file the note file instance.
      * @return a String with the file name.
      */
-    public String getFileName(Note file) {
+    public String getFileName(File file) {
         if (file != null) {
             return file.getName();
         } else {
@@ -142,11 +58,11 @@ public class NotesRepository {
      * @param file the note file instance.
      * @return a String with the file text.
      */
-    public String getFileText(Note file) {
+    public String getFileText(File file) {
         String text = "";
         if (file != null) {
             try {
-                text = file.getTextFromFile();
+                text = file.getText();
             } catch (IOException e) {
                 displayLongToast(e.toString());
                 e.printStackTrace();
@@ -162,7 +78,7 @@ public class NotesRepository {
      * @param file the note file instance.
      * @return the number of bytes in this file.
      */
-    public long getFileLength(Note file) {
+    public long getFileLength(File file) {
         return file.length();
     }
 
@@ -171,7 +87,7 @@ public class NotesRepository {
      * @param file the note file instance.
      * @return a String with the file last modified formatted date.
      */
-    public String lastModified(Note file) {
+    public String lastModified(File file) {
         long modifiedTime = file.lastModified();
         SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateTimeInstance();
         return sdf.format(modifiedTime);
@@ -182,13 +98,13 @@ public class NotesRepository {
      * @param file the note file instance.
      * @return true if the file has been created successfully, false otherwise.
      */
-    public boolean createNewFile(Note file) {
+    public boolean createNewFile(File file) {
         if (file != null) {
             if (file.exists()) {
                 displayShortToast(mApplication.getString(R.string.same_name_note_exists));
                 return false;
             } else {
-                return file.createNewFile();
+                return file.create();
             }
         }
         return false;
@@ -262,9 +178,7 @@ public class NotesRepository {
      * Reads the working directory contents and builds a files list.
      * @param liveDataFilesList a files list LiveData to update with the files list.
      */
-    public void updateFilesList(MutableLiveData<String[]> liveDataFilesList) {
-        // Get working dir
-        String workingDir = getWorkingDir();
+    public void updateFilesList(String workingDir, MutableLiveData<String[]> liveDataFilesList) {
         if (workingDir != null && liveDataFilesList != null) {
             Observable<String[]> observable = Observable.just(buildFilesArray(workingDir));
 
@@ -301,9 +215,9 @@ public class NotesRepository {
      * @param file the note file instance.
      * @param liveDataFilesList a files list LiveData to update.
      */
-    public void deleteFile(Note file, MutableLiveData<String[]> liveDataFilesList) {
+    public void deleteFile(File file, MutableLiveData<String[]> liveDataFilesList) {
         if (file != null) {
-            Observable<Boolean> observable = Observable.just(file.deleteFile());
+            Observable<Boolean> observable = Observable.just(file.delete());
 
             Observer<Boolean> observer = new Observer<Boolean>() {
                 @Override
@@ -325,7 +239,7 @@ public class NotesRepository {
 
                 @Override
                 public void onComplete() {
-                    updateFilesList(liveDataFilesList);
+                    updateFilesList(file.getWorkingDir() ,liveDataFilesList);
                 }
             };
 
@@ -342,9 +256,9 @@ public class NotesRepository {
      * @param newName a new name for the file.
      * @param liveDataActionBarTitle an ActionBar title LiveData to update with the new name.
      */
-    public void renameFile(Note file, String newName, MutableLiveData<String> liveDataActionBarTitle) {
+    public void renameFile(File file, String newName, MutableLiveData<String> liveDataActionBarTitle) {
         if (file != null) {
-            Observable<Boolean> observable = Observable.just(file.renameFile(newName));
+            Observable<Boolean> observable = Observable.just(file.rename(newName));
 
             Observer<Boolean> observer = new Observer<Boolean>() {
                 @Override
@@ -383,9 +297,9 @@ public class NotesRepository {
      * @param file the note file instance.
      * @param text a text to save to the current note.
      */
-    public void saveTextToFile(Note file, String text) {
+    public void saveTextToFile(File file, String text) {
         if (file != null) {
-            Observable<Boolean> observable = Observable.just(file.saveTextToFile(text));
+            Observable<Boolean> observable = Observable.just(file.save(text));
 
             Observer<Boolean> observer = new Observer<Boolean>() {
                 @Override

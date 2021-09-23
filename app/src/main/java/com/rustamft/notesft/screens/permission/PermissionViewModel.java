@@ -6,15 +6,15 @@ import android.content.Intent;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 
-import com.rustamft.notesft.database.NotesRepository;
+import com.rustamft.notesft.utils.AppSharedPreferences;
 
 public class PermissionViewModel extends AndroidViewModel {
-    private final NotesRepository mNotesRepository;
+    private final AppSharedPreferences mSharedPrefs;
 
     public PermissionViewModel(@NonNull Application application) {
         super(application);
 
-        mNotesRepository = NotesRepository.getInstance(application);
+        mSharedPrefs = new AppSharedPreferences(application);
     }
 
     /**
@@ -22,7 +22,7 @@ public class PermissionViewModel extends AndroidViewModel {
      * @return true if the permission is granted, otherwise - false.
      */
     boolean hasPermission() {
-        return mNotesRepository.hasPermission();
+        return mSharedPrefs.hasPermission();
     }
 
     /**
@@ -30,6 +30,6 @@ public class PermissionViewModel extends AndroidViewModel {
      * @param resultData a data result from a folder chooser intent.
      */
     void setWorkingDir(Intent resultData) {
-        mNotesRepository.setWorkingDir(resultData);
+        mSharedPrefs.setWorkingDir(resultData);
     }
 }

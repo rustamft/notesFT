@@ -10,27 +10,33 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.rustamft.notesft.database.NotesRepository;
-import com.rustamft.notesft.models.Note;
+import com.rustamft.notesft.models.File;
+import com.rustamft.notesft.utils.AppSharedPreferences;
+import com.rustamft.notesft.utils.FileFactory;
 
 public class ListViewModel extends AndroidViewModel {
+    private final Application mApplication;
     private final NotesRepository mNotesRepository;
     private final MutableLiveData<String[]> mNotesListLiveData = new MutableLiveData<>();
+    private final AppSharedPreferences mSharedPrefs;
+    private final FileFactory mFileFactory;
     private String mAppVersion = "Not available";
-    private final Application mApplication;
 
     public ListViewModel(@NonNull Application application) {
         super(application);
 
-        mNotesRepository = NotesRepository.getInstance(application);
         mApplication = application;
+        mNotesRepository = NotesRepository.getInstance(application);
+        mSharedPrefs = new AppSharedPreferences(application);
+        mFileFactory = new FileFactory(application, mSharedPrefs.getWorkingDir());
     }
 
     /**
      * Checks if the app has the files read/write permission.
-     * @return true if the permission is granted, otherwise - false.
+     * @return true if the permission is granted, false otherwise.
      */
     boolean hasPermission() {
-        return mNotesRepository.hasPermission();
+        return mSharedPrefs.hasPermission();
     }
 
     /**
@@ -45,7 +51,7 @@ public class ListViewModel extends AndroidViewModel {
      * Reads the working directory contents and builds an updated note files list.
      */
     void updateNotesList() {
-        mNotesRepository.updateFilesList(mNotesListLiveData);
+        mNotesRepository.updateFilesList(mSharedPrefs.getWorkingDir(), mNotesListLiveData);
     }
 
     /**
@@ -65,7 +71,7 @@ public class ListViewModel extends AndroidViewModel {
      * @param noteName a name of a note to be deleted.
      */
     void deleteNote(String noteName) {
-        Note note = mNotesRepository.getFileInstance(noteName);
+        File note = mFileFactory.getFileInstance(noteName);
         mNotesRepository.deleteFile(note, mNotesListLiveData);
     }
 
@@ -75,7 +81,7 @@ public class ListViewModel extends AndroidViewModel {
      * @return true if the file has been created successfully, otherwise - false.
      */
     boolean createNote(String noteName) {
-        Note note = mNotesRepository.getFileInstance(noteName);
+        File note = mFileFactory.getFileInstance(noteName);
         return mNotesRepository.createNewFile(note);
     }
 

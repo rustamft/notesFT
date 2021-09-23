@@ -14,20 +14,22 @@ import androidx.lifecycle.OnLifecycleEvent;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
 import com.rustamft.notesft.database.NotesRepository;
-import com.rustamft.notesft.models.Note;
+import com.rustamft.notesft.models.File;
+import com.rustamft.notesft.utils.AppSharedPreferences;
+import com.rustamft.notesft.utils.FileFactory;
 
 public class EditorViewModel extends AndroidViewModel implements LifecycleObserver {
+    private final Application mApplication;
     private final NotesRepository mNotesRepository;
     private final MutableLiveData<String> mLiveDataToolbarTitle = new MutableLiveData<>();
-    private final Application mApplication;
-    private Note mCurrentNote;
+    private File mCurrentNote;
     private Observer<String> mObserverToolbarTitle;
 
     public EditorViewModel(@NonNull Application application) {
         super(application);
 
-        mNotesRepository = NotesRepository.getInstance(application);
         mApplication = application;
+        mNotesRepository = NotesRepository.getInstance(application);
     }
 
     /**
@@ -56,7 +58,9 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
      * @param name the name of a note.
      */
     void setCurrentNote(String name) {
-        mCurrentNote = mNotesRepository.getFileInstance(name);
+        mCurrentNote = new FileFactory(mApplication,
+                new AppSharedPreferences(mApplication).getWorkingDir())
+                .getFileInstance(name);
         mLiveDataToolbarTitle.setValue(name); // Set toolbar title
     }
 
