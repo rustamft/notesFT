@@ -30,8 +30,6 @@ public class EditorFragment extends Fragment {
     public static final String NOTE_NAME = "com.rustamft.notesft.NOTE_NAME";
     EditorViewModel mEditorViewModel;
     private String mNoteName;
-    private EditText mEditText;
-    private FloatingActionButton mSaveFAB;
     OnBackPressedCallback mCallback;
 
     @Override
@@ -57,22 +55,14 @@ public class EditorFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_editor, menu);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        // The PopUp callback is not triggered without this
-        requireActivity().getOnBackPressedDispatcher().addCallback(this.mCallback);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_editor, container, false);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_editor, menu);
     }
 
     @Override
@@ -109,11 +99,11 @@ public class EditorFragment extends Fragment {
         // Register LifeCycle observer to reset toolbar title
         getLifecycle().addObserver(mEditorViewModel);
         // Initialize save FAB
-        mSaveFAB = view.findViewById(R.id.fab_save);
-        // Initialize, fill and activate EditText
-        mEditText = view.findViewById(R.id.edittext_note);
-        mEditText.setText(mEditorViewModel.getNoteText());
-        mEditText.addTextChangedListener(new TextWatcher() {
+        FloatingActionButton saveFAB = view.findViewById(R.id.fab_save);
+        // Fill and activate EditText view
+        EditText editText = view.findViewById(R.id.edittext_note);
+        editText.setText(mEditorViewModel.getNoteText());
+        TextWatcher textWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -124,17 +114,26 @@ public class EditorFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (mSaveFAB.getVisibility() != View.VISIBLE) {
-                    animateFade(mSaveFAB, 0f, 1f);
+                if (saveFAB.getVisibility() != View.VISIBLE) {
+                    animateFade(saveFAB, 0f, 1f);
                 }
             }
-        });
+        };
+        editText.addTextChangedListener(textWatcher);
         // Activate save FAB
-        mSaveFAB.setOnClickListener(v -> {
-            String noteText = mEditText.getText().toString();
+        saveFAB.setOnClickListener(v -> {
+            String noteText = editText.getText().toString();
             mEditorViewModel.saveTextToNote(noteText);
-            animateFade(mSaveFAB, 1f, 0f);
+            animateFade(saveFAB, 1f, 0f);
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // The PopUp callback is not triggered without this
+        requireActivity().getOnBackPressedDispatcher().addCallback(this.mCallback);
     }
 
     private void animateFade(View view, float from, float to) {
@@ -156,7 +155,8 @@ public class EditorFragment extends Fragment {
                 .setMessage(R.string.what_to_do)
                 .setPositiveButton(R.string.action_save, (dialog, which) -> {
                     // Save button clicked
-                    String noteText = mEditText.getText().toString();
+                    EditText editText = requireView().findViewById(R.id.edittext_note);
+                    String noteText = editText.getText().toString();
                     mEditorViewModel.saveTextToNote(noteText);
                     navigateBack();
                 })
@@ -230,7 +230,8 @@ public class EditorFragment extends Fragment {
      * Before navigating back checks if note has unsaved text and shows an alert if it does
      */
     private void onBackPressed() {
-        if (mSaveFAB.getVisibility() == View.VISIBLE) {
+        FloatingActionButton saveFAB = requireView().findViewById(R.id.fab_save);
+        if (saveFAB.getVisibility() == View.VISIBLE) {
             unsavedTextAlert();
         } else navigateBack();
     }
