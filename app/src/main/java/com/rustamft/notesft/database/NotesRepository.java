@@ -25,26 +25,13 @@ import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public class NotesRepository {
+public class NotesRepository implements Repository {
     private final Application mApplication;
-    private static NotesRepository INSTANCE;
 
-    private NotesRepository(@NonNull Application application) {
+    public NotesRepository(@NonNull Application application) {
         mApplication = application;
     }
 
-    public static NotesRepository getInstance(Application application) {
-        if(INSTANCE == null) {
-            INSTANCE = new NotesRepository(application);
-        }
-        return INSTANCE;
-    }
-
-    /**
-     * Returns a name of a given file.
-     * @param file the note file instance.
-     * @return a String with the file name.
-     */
     public String getFileName(File file) {
         if (file != null) {
             return file.getName();
@@ -53,11 +40,6 @@ public class NotesRepository {
         }
     }
 
-    /**
-     * Reads a text this file contains.
-     * @param file the note file instance.
-     * @return a String with the file text.
-     */
     public String getFileText(File file) {
         String text = "";
         if (file != null) {
@@ -71,33 +53,16 @@ public class NotesRepository {
         return text;
     }
 
-    /**
-     * Returns the length of this file in bytes.
-     * Returns 0 if the file does not exist, or if the length is unknown.
-     * The result for a directory is not defined.
-     * @param file the note file instance.
-     * @return the number of bytes in this file.
-     */
     public long getFileLength(File file) {
         return file.length();
     }
 
-    /**
-     * Returns a date the file was last modified.
-     * @param file the note file instance.
-     * @return a String with the file last modified formatted date.
-     */
     public String lastModified(File file) {
         long modifiedTime = file.lastModified();
         SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateTimeInstance();
         return sdf.format(modifiedTime);
     }
 
-    /**
-     * Creates a file with the given name.
-     * @param file the note file instance.
-     * @return true if the file has been created successfully, false otherwise.
-     */
     public boolean createNewFile(File file) {
         if (file != null) {
             if (file.exists()) {
@@ -158,7 +123,7 @@ public class NotesRepository {
      * Displays a short timed toast message.
      * @param message a message to be shown in the toast.
      */
-    public void displayShortToast(String message) {
+    private void displayShortToast(String message) {
         Toast.makeText(mApplication, message, Toast.LENGTH_SHORT).show();
     }
 
@@ -166,7 +131,7 @@ public class NotesRepository {
      * Displays a long timed toast message.
      * @param message a message to be shown in the toast.
      */
-    public void displayLongToast(String message) {
+    private void displayLongToast(String message) {
         Toast.makeText(mApplication, message, Toast.LENGTH_LONG).show();
     }
 
@@ -174,10 +139,6 @@ public class NotesRepository {
     /////////////////////////// Worker thread methods ///////////////////////////
     */
 
-    /**
-     * Reads the working directory contents and builds a files list.
-     * @param liveDataFilesList a files list LiveData to update with the files list.
-     */
     public void updateFilesList(String workingDir, MutableLiveData<String[]> liveDataFilesList) {
         if (workingDir != null && liveDataFilesList != null) {
             Observable<String[]> observable = Observable.just(buildFilesArray(workingDir));
@@ -210,11 +171,6 @@ public class NotesRepository {
         }
     }
 
-    /**
-     * Deletes a given file.
-     * @param file the note file instance.
-     * @param liveDataFilesList a files list LiveData to update.
-     */
     public void deleteFile(File file, MutableLiveData<String[]> liveDataFilesList) {
         if (file != null) {
             Observable<Boolean> observable = Observable.just(file.delete());
@@ -250,12 +206,6 @@ public class NotesRepository {
         }
     }
 
-    /**
-     * Renames a given file.
-     * @param file the file instance.
-     * @param newName a new name for the file.
-     * @param liveDataActionBarTitle an ActionBar title LiveData to update with the new name.
-     */
     public void renameFile(File file, String newName, MutableLiveData<String> liveDataActionBarTitle) {
         if (file != null) {
             Observable<Boolean> observable = Observable.just(file.rename(newName));
@@ -292,11 +242,6 @@ public class NotesRepository {
         }
     }
 
-    /**
-     * Saves the given text to the file.
-     * @param file the note file instance.
-     * @param text a text to save to the current note.
-     */
     public void saveTextToFile(File file, String text) {
         if (file != null) {
             Observable<Boolean> observable = Observable.just(file.save(text));

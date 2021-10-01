@@ -1,4 +1,4 @@
-package com.rustamft.notesft.utils;
+package com.rustamft.notesft.database;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -11,19 +11,15 @@ import android.net.Uri;
 
 import java.util.List;
 
-public class AppSharedPreferences {
+public class NotesSharedPrefs implements SharedPrefs {
     private final Application mApplication;
     private final String SHARED_PREF_FILE = "com.rustamft.notesft.shared_preferences";
     private final String WORKING_DIR_KEY = "working_dir";
 
-    public AppSharedPreferences(Application application) {
+    public NotesSharedPrefs(Application application) {
         mApplication = application;
     }
 
-    /**
-     * Checks if the app has read/write permission by iterating through the app's permission list.
-     * @return true if the permission is granted, false otherwise.
-     */
     public boolean hasPermission() {
         // Get working dir
         String workingDir = getWorkingDir();
@@ -48,10 +44,6 @@ public class AppSharedPreferences {
         return false;
     }
 
-    /**
-     * Writes the working directory to the app's SharedPreferences.
-     * @param resultData a data result from a folder chooser intent.
-     */
     @SuppressLint("WrongConstant")
     public void setWorkingDir(Intent resultData) {
         Uri directoryUri = resultData.getData();
@@ -69,10 +61,6 @@ public class AppSharedPreferences {
                 .apply();
     }
 
-    /**
-     * Gets a working directory path stored in SharedPreferences.
-     * @return a String with the working directory path or null if there's none stored.
-     */
     public String getWorkingDir() {
         SharedPreferences sharedPreferences = mApplication
                 .getSharedPreferences(SHARED_PREF_FILE, MODE_PRIVATE);

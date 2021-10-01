@@ -6,15 +6,17 @@ import android.content.Intent;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 
-import com.rustamft.notesft.utils.AppSharedPreferences;
+import com.rustamft.notesft.database.SharedPrefs;
+import com.rustamft.notesft.utils.DIC;
 
 public class PermissionViewModel extends AndroidViewModel {
-    private final AppSharedPreferences mSharedPrefs;
+    private final SharedPrefs mSharedPrefs;
 
     public PermissionViewModel(@NonNull Application application) {
         super(application);
 
-        mSharedPrefs = new AppSharedPreferences(application);
+        DIC dic = new DIC(application);
+        mSharedPrefs = dic.getSharedPrefs();
     }
 
     /**

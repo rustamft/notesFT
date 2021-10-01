@@ -14,13 +14,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Objects;
 
-public class Note implements File{
+public class NoteFile implements File{
     private final Context mContext;
     private final String mWorkingDir;
     private String mName;
     private DocumentFile mFile;
 
-    public Note(Context context, String workingDir, String fileName) {
+    public NoteFile(Context context, String workingDir, String fileName) {
         mContext = context;
         mWorkingDir = workingDir;
         mName = fileName;

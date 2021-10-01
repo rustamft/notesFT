@@ -13,14 +13,12 @@ import androidx.lifecycle.OnLifecycleEvent;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
-import com.rustamft.notesft.database.NotesRepository;
+import com.rustamft.notesft.database.Repository;
 import com.rustamft.notesft.models.File;
-import com.rustamft.notesft.utils.AppSharedPreferences;
-import com.rustamft.notesft.utils.FileFactory;
+import com.rustamft.notesft.utils.DIC;
 
 public class EditorViewModel extends AndroidViewModel implements LifecycleObserver {
-    private final Application mApplication;
-    private final NotesRepository mNotesRepository;
+    private final Repository mNotesRepository;
     private final MutableLiveData<String> mLiveDataToolbarTitle = new MutableLiveData<>();
     private File mCurrentNote;
     private Observer<String> mObserverToolbarTitle;
@@ -28,8 +26,8 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
     public EditorViewModel(@NonNull Application application) {
         super(application);
 
-        mApplication = application;
-        mNotesRepository = NotesRepository.getInstance(application);
+        DIC dic = new DIC(application);
+        mNotesRepository = dic.getRepository();
     }
 
     /**
@@ -49,7 +47,7 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     void resetActionBarTitle() {
-        mLiveDataToolbarTitle.setValue(mApplication.getString(R.string.app_name));
+        mLiveDataToolbarTitle.setValue(getApplication().getString(R.string.app_name));
         mLiveDataToolbarTitle.removeObserver(mObserverToolbarTitle);
     }
 
@@ -58,9 +56,8 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
      * @param name the name of a note.
      */
     void setCurrentNote(String name) {
-        mCurrentNote = new FileFactory(mApplication,
-                new AppSharedPreferences(mApplication).getWorkingDir())
-                .getFileInstance(name);
+        DIC dic = new DIC(getApplication());
+        mCurrentNote = dic.getFileInstance(name);
         mLiveDataToolbarTitle.setValue(name); // Set toolbar title
     }
 

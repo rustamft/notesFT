@@ -9,26 +9,24 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
-import com.rustamft.notesft.database.NotesRepository;
+import com.rustamft.notesft.database.Repository;
+import com.rustamft.notesft.database.SharedPrefs;
 import com.rustamft.notesft.models.File;
-import com.rustamft.notesft.utils.AppSharedPreferences;
-import com.rustamft.notesft.utils.FileFactory;
+import com.rustamft.notesft.utils.DIC;
 
 public class ListViewModel extends AndroidViewModel {
-    private final Application mApplication;
-    private final NotesRepository mNotesRepository;
+    private final Repository mNotesRepository;
+    private final SharedPrefs mSharedPrefs;
+    private final DIC mDIC;
     private final MutableLiveData<String[]> mNotesListLiveData = new MutableLiveData<>();
-    private final AppSharedPreferences mSharedPrefs;
-    private final FileFactory mFileFactory;
     private String mAppVersion = "Not available";
 
     public ListViewModel(@NonNull Application application) {
         super(application);
 
-        mApplication = application;
-        mNotesRepository = NotesRepository.getInstance(application);
-        mSharedPrefs = new AppSharedPreferences(application);
-        mFileFactory = new FileFactory(application, mSharedPrefs.getWorkingDir());
+        mDIC = new DIC(application);
+        mNotesRepository = mDIC.getRepository();
+        mSharedPrefs = mDIC.getSharedPrefs();
     }
 
     /**
@@ -71,7 +69,7 @@ public class ListViewModel extends AndroidViewModel {
      * @param noteName a name of a note to be deleted.
      */
     void deleteNote(String noteName) {
-        File note = mFileFactory.getFileInstance(noteName);
+        File note = mDIC.getFileInstance(noteName);
         mNotesRepository.deleteFile(note, mNotesListLiveData);
     }
 
@@ -81,7 +79,7 @@ public class ListViewModel extends AndroidViewModel {
      * @return true if the file has been created successfully, otherwise - false.
      */
     boolean createNote(String noteName) {
-        File note = mFileFactory.getFileInstance(noteName);
+        File note = mDIC.getFileInstance(noteName);
         return mNotesRepository.createNewFile(note);
     }
 
@@ -92,7 +90,7 @@ public class ListViewModel extends AndroidViewModel {
     String getAppVersion() {
         if (mAppVersion.equals("Not available")) {
             try {
-                Context context = mApplication.getApplicationContext();
+                Context context = getApplication().getApplicationContext();
                 PackageInfo packageInfo = context.getPackageManager()
                         .getPackageInfo(context.getPackageName(), 0);
                 mAppVersion = packageInfo.versionName;
