@@ -7,10 +7,10 @@ android {
 
     defaultConfig {
         applicationId "com.rustamft.notesft"
-        minSdk 28
+        minSdk 21
         targetSdk 30
         versionCode 1
-        versionName "1.0.4"
+        versionName "1.0.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -22,6 +22,9 @@ android {
         }
     }
     compileOptions {
+        // Flag to enable support for the new language APIs
+        coreLibraryDesugaringEnabled true
+        // Sets Java compatibility to Java 8
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -35,21 +38,23 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0-alpha01'
-    androidTestImplementation 'androidx.test:rules:1.4.1-alpha01'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0-alpha02'
+    androidTestImplementation 'androidx.test:rules:1.4.1-alpha02'
 
-    // Lifecycle components
+    // Desugaring.
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+    // Lifecycle components.
     def lifecycle_version = "2.3.1"
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
-    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.0-alpha01'
-    // Navigation
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.0-alpha02'
+    // Navigation.
     def nav_version = "2.3.5"
     implementation "androidx.navigation:navigation-fragment:$nav_version"
     implementation "androidx.navigation:navigation-ui:$nav_version"
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
-    // RxJava and RxAndroid
+    // RxJava and RxAndroid.
     implementation 'io.reactivex.rxjava3:rxjava:3.1.1'
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
-    // LeakCanary
+    // LeakCanary TODO: remove before release build.
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
 }

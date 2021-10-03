@@ -3,8 +3,6 @@ package com.rustamft.notesft.database;
 import android.app.Application;
 import android.content.ContentResolver;
 import android.database.Cursor;
-import android.icu.text.DateFormat;
-import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.widget.Toast;
@@ -16,6 +14,10 @@ import com.rustamft.notesft.R;
 import com.rustamft.notesft.models.File;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -58,9 +60,11 @@ public class NotesRepository implements Repository {
     }
 
     public String lastModified(File file) {
-        long modifiedTime = file.lastModified();
-        SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateTimeInstance();
-        return sdf.format(modifiedTime);
+        long milliseconds = file.lastModified();
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+        ZonedDateTime dateTime = instant.atZone(ZoneId.systemDefault());
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
+        return dateTime.format(dateTimeFormatter);
     }
 
     public boolean createNewFile(File file) {

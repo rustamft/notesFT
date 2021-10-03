@@ -29,6 +29,7 @@ public class DIC {
 
     /**
      * Returns the Repository instance.
+     *
      * @return the saved instance of Repository or a new one.
      */
     public Repository getRepository() {
@@ -37,6 +38,7 @@ public class DIC {
 
     /**
      * Returns the SharedPrefs instance.
+     *
      * @return the saved instance of SharedPrefs or a new one.
      */
     public SharedPrefs getSharedPrefs() {
@@ -45,16 +47,17 @@ public class DIC {
 
     /**
      * Returns a file instance if the given name is correct.
+     *
      * @param name the name of the file.
      * @return an instance of a note file.
      */
     public File getFileInstance(String name) {
-        // Check if the name is valid: has at least one letter or digit
+        // Check if the name is valid: has at least one letter or digit.
         char[] chars = name.toCharArray();
         for (char c : chars) {
             if (Character.isLetterOrDigit(c)) { // If the name is valid
                 String workingDir = getSharedPrefs().getWorkingDir();
-                return new NoteFile(mApplication, workingDir, name); // The cycle stopped
+                return new NoteFile(mApplication, workingDir, name);
             }
         }
         return null; // If the name is invalid

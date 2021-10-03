@@ -14,6 +14,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Objects;
 
+/**
+ * Represents a note file.
+ */
 public class NoteFile implements File{
     private final Context mContext;
     private final String mWorkingDir;
@@ -74,9 +77,8 @@ public class NoteFile implements File{
         if (renamedFile == null) {
             return false;
         }
-        boolean newFileExists = renamedFile.exists();
 
-        if (!newFileExists) { // Do the rename and check it's successful
+        if (!renamedFile.exists()) { // Do the rename and check it's successful
             if (exists()) { // If old file exists
                 try {
                     Uri renamedFileUri = DocumentsContract
@@ -115,6 +117,9 @@ public class NoteFile implements File{
             // Create new file
             Uri noteFileUri = DocumentsContract.createDocument(mContext.getContentResolver(),
                     parentDocumentUri, "", mName);
+            if (noteFileUri == null) {
+                return false;
+            }
             mFile = DocumentFile.fromSingleUri(mContext, noteFileUri);
             return true;
         } catch (IOException e) {
@@ -125,7 +130,7 @@ public class NoteFile implements File{
 
     public boolean save(String text) {
         try {
-            // Write a content of the file
+            // Write the text to the file.
             ParcelFileDescriptor pfd = mContext.getContentResolver().
                     openFileDescriptor(mFile.getUri(), "wt");
             FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());

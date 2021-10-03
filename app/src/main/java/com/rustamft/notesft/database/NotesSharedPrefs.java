@@ -46,12 +46,14 @@ public class NotesSharedPrefs implements SharedPrefs {
 
     @SuppressLint("WrongConstant")
     public void setWorkingDir(Intent resultData) {
+        // Get URI from result.
         Uri directoryUri = resultData.getData();
+        // Persist the permission.
         final int flags = resultData.getFlags()
                 & (Intent.FLAG_GRANT_READ_URI_PERMISSION
                 | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         mApplication.getContentResolver().takePersistableUriPermission(directoryUri, flags);
-
+        // Save to SharedPrefs.
         String workingDir = directoryUri.toString();
         SharedPreferences sharedPreferences = mApplication
                 .getSharedPreferences(SHARED_PREF_FILE, MODE_PRIVATE);
