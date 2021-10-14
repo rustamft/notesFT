@@ -52,6 +52,14 @@ public class ListViewModel extends AndroidViewModel {
         mNotesRepository.updateFilesList(mSharedPrefs.getWorkingDir(), mNotesListLiveData);
     }
 
+    void setNightMode(int mode) {
+        mSharedPrefs.setNightMode(mode);
+    }
+
+    int getNightMode() {
+        return mSharedPrefs.getNightMode();
+    }
+
     /**
      * Getter for a note name at the given position.
      * @param position a position in the notes list.
@@ -80,7 +88,7 @@ public class ListViewModel extends AndroidViewModel {
      */
     boolean createNote(String noteName) {
         File note = mDIC.getFileInstance(noteName);
-        return mNotesRepository.createNewFile(note);
+        return mNotesRepository.createFile(note);
     }
 
     /**

@@ -41,7 +41,7 @@ public interface Repository {
      * @param file the note file instance.
      * @return true if the file has been created successfully, false otherwise.
      */
-    boolean createNewFile(File file);
+    boolean createFile(File file);
 
     /**
      * Reads the working directory contents and builds a files list.
@@ -69,7 +69,7 @@ public interface Repository {
      * @param file the note file instance.
      * @param text a text to save to the current note.
      */
-    void saveTextToFile(File file, String text);
+    void saveFile(File file, String text);
 
 
 }

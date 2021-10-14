@@ -32,7 +32,8 @@ public class NoteFile implements File{
 
     private DocumentFile getDocumentFile(String workingDir, String fileName) {
         Uri basePathUri = Uri.parse(workingDir);
-        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(basePathUri,
+        Uri childrenUri =
+                DocumentsContract.buildChildDocumentsUriUsingTree(basePathUri,
                 DocumentsContract.getTreeDocumentId(basePathUri));
         String extPath = childrenUri.toString()
                 .replace("/children", "%2F");
@@ -81,8 +82,8 @@ public class NoteFile implements File{
         if (!renamedFile.exists()) { // Do the rename and check it's successful
             if (exists()) { // If old file exists
                 try {
-                    Uri renamedFileUri = DocumentsContract
-                            .renameDocument(mContext.getContentResolver(), mFile.getUri(), newName);
+                    Uri renamedFileUri = DocumentsContract.renameDocument(
+                            mContext.getContentResolver(), mFile.getUri(), newName);
                     renamedFile = DocumentFile.fromSingleUri(mContext, renamedFileUri);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -131,8 +132,8 @@ public class NoteFile implements File{
     public boolean save(String text) {
         try {
             // Write the text to the file.
-            ParcelFileDescriptor pfd = mContext.getContentResolver().
-                    openFileDescriptor(mFile.getUri(), "wt");
+            ParcelFileDescriptor pfd =
+                    mContext.getContentResolver().openFileDescriptor(mFile.getUri(), "wt");
             FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());
             fos.write(text.getBytes());
             fos.close();

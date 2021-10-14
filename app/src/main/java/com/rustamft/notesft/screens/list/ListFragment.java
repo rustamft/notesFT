@@ -17,7 +17,9 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
@@ -28,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.activities.MainActivity;
 import com.rustamft.notesft.screens.editor.EditorFragment;
 
 public class ListFragment extends Fragment {
@@ -69,6 +72,8 @@ public class ListFragment extends Fragment {
 
         // Initialize ViewModel
         mListViewModel = new ViewModelProvider(this).get(ListViewModel.class);
+        // Restore UI night mode state.
+        AppCompatDelegate.setDefaultNightMode(mListViewModel.getNightMode());
         // Get LiveData reference
         LiveData<String[]> notesListLiveData = mListViewModel.getNotesListLiveData();
         // Initialize adapter
@@ -96,6 +101,7 @@ public class ListFragment extends Fragment {
         // Handle action bar item clicks
         final int ACTION_REFRESH_ID = R.id.action_refresh;
         final int ACTION_CHOOSE_DIR_ID = R.id.action_choose_dir;
+        final int ACTION_SWITCH_DARK_ID = R.id.action_switch_night;
         final int ACTION_ABOUT_APP_ID = R.id.action_about_app;
         switch (item.getItemId()) {
             case ACTION_REFRESH_ID:
@@ -105,6 +111,9 @@ public class ListFragment extends Fragment {
                 return true;
             case ACTION_CHOOSE_DIR_ID:
                 promptNavigateBack();
+                return true;
+            case ACTION_SWITCH_DARK_ID:
+                switchNightMode();
                 return true;
             case ACTION_ABOUT_APP_ID:
                 showAboutApp();
@@ -149,8 +158,27 @@ public class ListFragment extends Fragment {
         builder.show();
     }
 
+    private void switchNightMode() {
+        int mode = AppCompatDelegate.getDefaultNightMode();
+        if (mode != AppCompatDelegate.MODE_NIGHT_YES) {
+            mode = AppCompatDelegate.MODE_NIGHT_YES;
+        } else {
+            mode = AppCompatDelegate.MODE_NIGHT_NO;
+        }
+        // Do the UI switch.
+        AppCompatDelegate.setDefaultNightMode(mode);
+        // Remember the choice.
+        mListViewModel.setNightMode(mode);
+        // Hide Up button from ActionBar.
+        ActionBar actionBar = ((MainActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(false);
+        }
+    }
+
     private void showAboutApp() {
-        String message = getString(R.string.about_app_content) + mListViewModel.getAppVersion();
+        String message =
+                getString(R.string.about_app_content) + mListViewModel.getAppVersion();
         // Alert builder
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.about_app)

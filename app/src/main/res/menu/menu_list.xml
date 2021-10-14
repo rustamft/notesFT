@@ -17,9 +17,15 @@
         android:title="@string/choose_directory"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_switch_night"
+        android:icon="@drawable/ic_switch_night"
+        android:orderInCategory="3"
+        android:title="@string/switch_night_mode"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_about_app"
         android:icon="@drawable/ic_info"
-        android:orderInCategory="3"
+        android:orderInCategory="4"
         android:title="@string/about_app"
         app:showAsAction="ifRoom" />
 

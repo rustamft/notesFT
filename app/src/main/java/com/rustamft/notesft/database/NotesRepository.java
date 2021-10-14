@@ -67,7 +67,7 @@ public class NotesRepository implements Repository {
         return dateTime.format(dateTimeFormatter);
     }
 
-    public boolean createNewFile(File file) {
+    public boolean createFile(File file) {
         if (file != null) {
             if (file.exists()) {
                 displayShortToast(mApplication.getString(R.string.same_name_note_exists));
@@ -90,7 +90,8 @@ public class NotesRepository implements Repository {
         // Build directory children URI
         Uri directoryPathUri = Uri.parse(workingDir);
         ContentResolver contentResolver = mApplication.getContentResolver();
-        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(directoryPathUri,
+        Uri childrenUri =
+                DocumentsContract.buildChildDocumentsUriUsingTree(directoryPathUri,
                 DocumentsContract.getTreeDocumentId(directoryPathUri));
         // Create a set to remember notes names
         HashSet<String> filesSet = new HashSet<>();
@@ -246,7 +247,7 @@ public class NotesRepository implements Repository {
         }
     }
 
-    public void saveTextToFile(File file, String text) {
+    public void saveFile(File file, String text) {
         if (file != null) {
             Observable<Boolean> observable = Observable.just(file.save(text));
 

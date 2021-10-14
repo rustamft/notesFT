@@ -33,6 +33,7 @@
     <string name="rename_note">Rename note</string>
     <string name="same_name_note_exists">The same name note already exists!</string>
     <string name="sample_text" translatable="false">Sample text</string>
+    <string name="switch_night_mode">Switch night mode</string>
     <string name="unsaved_changes">Unsaved changes</string>
     <string name="what_to_do">What would you like to do?</string>
 </resources>

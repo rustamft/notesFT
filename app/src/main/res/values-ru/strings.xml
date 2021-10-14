@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_app">О приложении</string>
     <string name="about_app_content">\n
@@ -32,6 +31,7 @@
     <string name="please_confirm">Подтвердите, пожалуйста</string>
     <string name="rename_note">Переименовать заметку</string>
     <string name="same_name_note_exists">Заметка с таким же названием уже существует!</string>
+    <string name="switch_night_mode">Переключить ночной режим</string>
     <string name="unsaved_changes">Несохраненные изменения</string>
     <string name="what_to_do">Что вы хотите сделать?</string>
 </resources>

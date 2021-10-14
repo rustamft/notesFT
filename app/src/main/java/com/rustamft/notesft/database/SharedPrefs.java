@@ -11,6 +11,18 @@ public interface SharedPrefs {
     boolean hasPermission();
 
     /**
+     * Sets a remembered state of the night mode for the app.
+     * @param mode the mode to be remembered.
+     */
+    void setNightMode(int mode);
+
+    /**
+     * Returns a night mode state saved.
+     * @return a night mode state saved, otherwise system default.
+     */
+    int getNightMode();
+
+    /**
      * Writes the working directory to the app's SharedPreferences.
      * @param resultData a data result from a folder chooser intent.
      */

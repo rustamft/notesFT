@@ -74,7 +74,7 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
      * @param text a text to save to the current note.
      */
     void saveTextToNote(String text) {
-        mNotesRepository.saveTextToFile(mCurrentNote, text);
+        mNotesRepository.saveFile(mCurrentNote, text);
     }
 
     /**
