@@ -6,19 +6,25 @@
     android:layout_height="match_parent"
     tools:context=".screens.editor.EditorFragment">
 
-    <EditText
-        android:id="@+id/edittext_note"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@null"
-        android:gravity="top"
-        android:importantForAutofill="no"
-        android:inputType="textMultiLine"
-        android:padding="8dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="LabelFor" />
+        android:layout_height="match_parent">
+
+        <EditText
+            android:id="@+id/edittext_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:gravity="top"
+            android:importantForAutofill="no"
+            android:inputType="textMultiLine"
+            android:padding="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="LabelFor" />
+
+    </ScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_save"
