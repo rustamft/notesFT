@@ -31,7 +31,7 @@
     <string name="please_confirm">Подтвердите, пожалуйста</string>
     <string name="rename_note">Переименовать заметку</string>
     <string name="same_name_note_exists">Заметка с таким же названием уже существует!</string>
-    <string name="switch_night_mode">Переключить ночной режим</string>
+    <string name="switch_night_mode">Включить темную тему</string>
     <string name="unsaved_changes">Несохраненные изменения</string>
     <string name="what_to_do">Что вы хотите сделать?</string>
 </resources>
