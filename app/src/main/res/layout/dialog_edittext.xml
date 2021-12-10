@@ -7,12 +7,10 @@
     android:padding="8dp">
 
     <EditText
-        android:id="@+id/edittext_create"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="top"
+        android:id="@+id/edittext_dialog"
+        style="@style/DialogEditText"
         android:hint="@string/enter_note_name"
         android:importantForAutofill="no"
-        android:inputType="textShortMessage" />
+        android:theme="@style/DialogEditText" />
 
 </LinearLayout>

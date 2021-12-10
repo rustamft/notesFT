@@ -54,6 +54,7 @@ class ListAdapter extends RecyclerView.Adapter<ListAdapter.ListViewHolder> {
     }
 
     void onItemClick(String itemName) {
+        // To be overridden by an upper class.
     }
 
     /*

@@ -12,21 +12,21 @@ import androidx.lifecycle.MutableLiveData;
 import com.rustamft.notesft.database.Repository;
 import com.rustamft.notesft.database.SharedPrefs;
 import com.rustamft.notesft.models.File;
-import com.rustamft.notesft.utils.DIC;
+import com.rustamft.notesft.utils.Dic;
 
 public class ListViewModel extends AndroidViewModel {
     private final Repository mNotesRepository;
     private final SharedPrefs mSharedPrefs;
-    private final DIC mDIC;
+    private final Dic mDic;
     private final MutableLiveData<String[]> mNotesListLiveData = new MutableLiveData<>();
     private String mAppVersion = "Not available";
 
     public ListViewModel(@NonNull Application application) {
         super(application);
 
-        mDIC = new DIC(application);
-        mNotesRepository = mDIC.getRepository();
-        mSharedPrefs = mDIC.getSharedPrefs();
+        mDic = new Dic(application);
+        mNotesRepository = mDic.getRepository();
+        mSharedPrefs = mDic.getSharedPrefs();
     }
 
     /**
@@ -77,7 +77,7 @@ public class ListViewModel extends AndroidViewModel {
      * @param noteName a name of a note to be deleted.
      */
     void deleteNote(String noteName) {
-        File note = mDIC.getFileInstance(noteName);
+        File note = mDic.getFileInstance(noteName);
         mNotesRepository.deleteFile(note, mNotesListLiveData);
     }
 
@@ -87,7 +87,7 @@ public class ListViewModel extends AndroidViewModel {
      * @return true if the file has been created successfully, otherwise - false.
      */
     boolean createNote(String noteName) {
-        File note = mDIC.getFileInstance(noteName);
+        File note = mDic.getFileInstance(noteName);
         return mNotesRepository.createFile(note);
     }
 

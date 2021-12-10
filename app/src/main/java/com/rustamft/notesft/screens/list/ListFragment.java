@@ -220,7 +220,7 @@ public class ListFragment extends Fragment {
 
     private void promptCreation() {
         final View view = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
-        final EditText editText = view.findViewById(R.id.edittext_create);
+        final EditText editText = view.findViewById(R.id.edittext_dialog);
         // Alert builder
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.new_note)

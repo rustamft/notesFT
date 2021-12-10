@@ -7,10 +7,9 @@
 
     <Button
         android:id="@+id/button_permission"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Button"
         android:layout_gravity="center"
         android:text="@string/choose_directory"
-        android:textColor="?colorOnSecondary" />
+        android:theme="@style/Button" />
 
 </FrameLayout>

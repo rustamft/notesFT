@@ -62,7 +62,7 @@ public class HundredNotesTest {
             floatingActionButton.perform(click());
 
             ViewInteraction appCompatEditText = onView(
-                    allOf(withId(R.id.edittext_create),
+                    allOf(withId(R.id.edittext_dialog),
                             childAtPosition(
                                     childAtPosition(
                                             withId(R.id.custom),

@@ -172,7 +172,7 @@ public class EditorFragment extends Fragment {
 
     private void promptRename() {
         final View view = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
-        final EditText editText = view.findViewById(R.id.edittext_create);
+        final EditText editText = view.findViewById(R.id.edittext_dialog);
         editText.setText(mEditorViewModel.getNoteName());
         // Alert builder
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())

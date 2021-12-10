@@ -16,7 +16,7 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="8dp"
+            android:padding="12dp"
             android:text="@string/sample_text"
             android:textColor="?colorOnSecondary"
             android:textSize="18sp" />

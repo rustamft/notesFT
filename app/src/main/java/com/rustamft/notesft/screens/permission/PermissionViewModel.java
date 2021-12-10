@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 
 import com.rustamft.notesft.database.SharedPrefs;
-import com.rustamft.notesft.utils.DIC;
+import com.rustamft.notesft.utils.Dic;
 
 public class PermissionViewModel extends AndroidViewModel {
     private final SharedPrefs mSharedPrefs;
@@ -15,7 +15,7 @@ public class PermissionViewModel extends AndroidViewModel {
     public PermissionViewModel(@NonNull Application application) {
         super(application);
 
-        DIC dic = new DIC(application);
+        Dic dic = new Dic(application);
         mSharedPrefs = dic.getSharedPrefs();
     }
 

@@ -15,7 +15,7 @@ import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
 import com.rustamft.notesft.database.Repository;
 import com.rustamft.notesft.models.File;
-import com.rustamft.notesft.utils.DIC;
+import com.rustamft.notesft.utils.Dic;
 
 public class EditorViewModel extends AndroidViewModel implements LifecycleObserver {
     private final Repository mNotesRepository;
@@ -26,7 +26,7 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
     public EditorViewModel(@NonNull Application application) {
         super(application);
 
-        DIC dic = new DIC(application);
+        Dic dic = new Dic(application);
         mNotesRepository = dic.getRepository();
     }
 
@@ -56,7 +56,7 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
      * @param name the name of a note.
      */
     void setCurrentNote(String name) {
-        DIC dic = new DIC(getApplication());
+        Dic dic = new Dic(getApplication());
         mCurrentNote = dic.getFileInstance(name);
         mLiveDataToolbarTitle.setValue(name); // Set toolbar title
     }

@@ -12,12 +12,12 @@ import com.rustamft.notesft.models.NoteFile;
 /**
  * Dependency Injection Container that provides instances of the vital parts of the app.
  */
-public class DIC {
+public class Dic {
     private final Application mApplication;
     private static Repository REPOSITORY;
     private static SharedPrefs SHARED_PREFS;
 
-    public DIC(Application application) {
+    public Dic(Application application) {
         mApplication = application;
         if (REPOSITORY == null) {
             REPOSITORY = new NotesRepository(mApplication);
