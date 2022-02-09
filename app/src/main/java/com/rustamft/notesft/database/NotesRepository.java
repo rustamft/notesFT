@@ -42,11 +42,11 @@ public class NotesRepository implements Repository {
         }
     }
 
-    public String getFileText(File file) {
+    public String buildStringFromFileContent(File file) {
         String text = "";
         if (file != null) {
             try {
-                text = file.getText();
+                text = file.buildStringFromContent();
             } catch (IOException e) {
                 displayLongToast(e.toString());
                 e.printStackTrace();

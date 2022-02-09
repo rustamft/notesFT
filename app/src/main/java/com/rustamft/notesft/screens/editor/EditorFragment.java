@@ -102,7 +102,7 @@ public class EditorFragment extends Fragment {
         FloatingActionButton saveFAB = view.findViewById(R.id.fab_save);
         // Fill and activate EditText view
         EditText editText = view.findViewById(R.id.edittext_note);
-        editText.setText(mEditorViewModel.getNoteText());
+        editText.setText(mEditorViewModel.readTextFromNote());
         TextWatcher textWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {

@@ -65,8 +65,8 @@ public class EditorViewModel extends AndroidViewModel implements LifecycleObserv
      * Reads a text the current note file contains.
      * @return a String with the current note text.
      */
-    String getNoteText() {
-        return mNotesRepository.getFileText(mCurrentNote);
+    String readTextFromNote() {
+        return mNotesRepository.buildStringFromFileContent(mCurrentNote);
     }
 
     /**

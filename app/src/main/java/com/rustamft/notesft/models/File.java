@@ -43,6 +43,12 @@ public interface File {
     String getWorkingDir();
 
     /**
+     * Creates a new file in the working directory.
+     * @return true if the file was created, false otherwise.
+     */
+    boolean create();
+
+    /**
      * Deletes this file.
      * @return true if this file was deleted, false otherwise.
      */
@@ -56,12 +62,6 @@ public interface File {
     boolean rename(String newName);
 
     /**
-     * Creates a new file in the working directory.
-     * @return true if the file was created, false otherwise.
-     */
-    boolean create();
-
-    /**
      * Writes a given text to an existing file.
      * @param text a text to save to the file.
      * @return true if the text has been saved, false otherwise.
@@ -73,5 +73,5 @@ public interface File {
      * @return a String with the file text.
      * @throws IOException if the file reading fails.
      */
-    String getText() throws IOException;
+    String buildStringFromContent() throws IOException;
 }

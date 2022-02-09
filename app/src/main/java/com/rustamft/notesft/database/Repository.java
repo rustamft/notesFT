@@ -18,7 +18,7 @@ public interface Repository {
      * @param file the note file instance.
      * @return a String with the file text.
      */
-    String getFileText(File file);
+    String buildStringFromFileContent(File file);
 
     /**
      * Returns the length of this file in bytes.

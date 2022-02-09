@@ -144,20 +144,6 @@ public class ListFragment extends Fragment {
         view.startAnimation(rotate);
     }
 
-    private void promptNavigateBack() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.please_confirm)
-                .setMessage(R.string.are_you_sure_change_dir)
-                .setPositiveButton(R.string.action_yes, (dialog, which) -> {
-                    // Yes button clicked
-                    navigateBack(true);
-                })
-                .setNegativeButton(R.string.action_no, (dialog, which) -> {
-                    // No button clicked
-                });
-        builder.show();
-    }
-
     private void switchNightMode() {
         int mode = AppCompatDelegate.getDefaultNightMode();
         if (mode != AppCompatDelegate.MODE_NIGHT_YES) {
@@ -202,22 +188,6 @@ public class ListFragment extends Fragment {
         }
     }
 
-    private void promptDeletion(String noteName) {
-        String message = getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
-        // Alert builder
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.please_confirm)
-                .setMessage(message)
-                .setPositiveButton(R.string.action_yes, (dialog, which) -> {
-                    // Yes button clicked
-                    mListViewModel.deleteNote(noteName);
-                })
-                .setNegativeButton(R.string.action_no, (dialog, which) -> {
-                    // No button clicked
-                });
-        builder.show();
-    }
-
     private void promptCreation() {
         final View view = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
         final EditText editText = view.findViewById(R.id.edittext_dialog);
@@ -235,6 +205,36 @@ public class ListFragment extends Fragment {
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
                     // Cancel button clicked
                 }));
+        builder.show();
+    }
+
+    private void promptDeletion(String noteName) {
+        String message = getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
+        // Alert builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.please_confirm)
+                .setMessage(message)
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> {
+                    // Yes button clicked
+                    mListViewModel.deleteNote(noteName);
+                })
+                .setNegativeButton(R.string.action_no, (dialog, which) -> {
+                    // No button clicked
+                });
+        builder.show();
+    }
+
+    private void promptNavigateBack() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.please_confirm)
+                .setMessage(R.string.are_you_sure_change_dir)
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> {
+                    // Yes button clicked
+                    navigateBack(true);
+                })
+                .setNegativeButton(R.string.action_no, (dialog, which) -> {
+                    // No button clicked
+                });
         builder.show();
     }
 
