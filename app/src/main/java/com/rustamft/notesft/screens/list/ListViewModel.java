@@ -14,11 +14,14 @@ import com.rustamft.notesft.database.SharedPrefs;
 import com.rustamft.notesft.models.File;
 import com.rustamft.notesft.utils.Dic;
 
+import java.util.List;
+import java.util.Objects;
+
 public class ListViewModel extends AndroidViewModel {
     private final Repository mNotesRepository;
     private final SharedPrefs mSharedPrefs;
     private final Dic mDic;
-    private final MutableLiveData<String[]> mNotesListLiveData = new MutableLiveData<>();
+    private final MutableLiveData<List<String>> mNotesListLiveData = new MutableLiveData<>();
     private String mAppVersion = "Not available";
 
     public ListViewModel(@NonNull Application application) {
@@ -41,7 +44,7 @@ public class ListViewModel extends AndroidViewModel {
      * Getter for LiveData of note files array.
      * @return the MutableLiveData stored in the ViewModel.
      */
-    MutableLiveData<String[]> getNotesListLiveData() {
+    MutableLiveData<List<String>> getNotesListLiveData() {
         return mNotesListLiveData;
     }
 
@@ -66,10 +69,7 @@ public class ListViewModel extends AndroidViewModel {
      * @return a String with the note name.
      */
     String getNoteNameAtPosition(int position) {
-        String[] notesList = mNotesListLiveData.getValue();
-        if (notesList != null) {
-            return notesList[position];
-        } else return null;
+        return Objects.requireNonNull(mNotesListLiveData.getValue()).get(position);
     }
 
     /**

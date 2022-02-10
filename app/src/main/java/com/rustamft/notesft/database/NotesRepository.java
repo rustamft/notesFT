@@ -18,8 +18,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -81,51 +82,53 @@ public class NotesRepository implements Repository {
 
     /**
      * Reads the working directory contents and builds an array of file names.
+     *
      * @param workingDir the app's working directory.
      * @return an array of strings representing file names.
      */
-    private String[] buildFilesArray(String workingDir) {
-        // Notes names array to be returned
-        String[] filesArray;
-        // Build directory children URI
-        Uri directoryPathUri = Uri.parse(workingDir);
-        ContentResolver contentResolver = mApplication.getContentResolver();
-        Uri childrenUri =
-                DocumentsContract.buildChildDocumentsUriUsingTree(directoryPathUri,
-                DocumentsContract.getTreeDocumentId(directoryPathUri));
-        // Create a set to remember notes names
-        HashSet<String> filesSet = new HashSet<>();
-        // Variables to remember single note name and mime type
+    private List<String> buildFilesList(String workingDir) {
+        List<String> filesList = new ArrayList<>();
         String name, mime;
-        // Go through notes
-        try (Cursor c = contentResolver.query(childrenUri, new String[]{
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                        DocumentsContract.Document.COLUMN_MIME_TYPE},
-                null, null, null)) {
+        ContentResolver contentResolver = mApplication.getContentResolver();
+        Uri childrenUri = buildChildrenUri(workingDir);
+        try (
+                Cursor c = contentResolver.query(
+                        childrenUri,
+                        new String[]{
+                                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                                DocumentsContract.Document.COLUMN_MIME_TYPE
+                        },
+                        null,
+                        null,
+                        null
+                )
+        ) {
             while (c.moveToNext()) {
                 name = c.getString(0);
                 mime = c.getString(1);
-                // Add the name to the set, if it's a file
+                // Add the name to the set, if it's a file, not a dir.
                 if (!(DocumentsContract.Document.MIME_TYPE_DIR.equals(mime))) {
-                    filesSet.add(name);
+                    filesList.add(name);
                 }
             }
         } catch (Exception e) {
             displayLongToast(e.toString());
         }
-        // Put the set to an array and sort it
-        filesArray = new String[filesSet.size()];
-        int i = 0;
-        for (String fileName : filesSet) {
-            filesArray[i] = fileName;
-            i++;
-        }
-        Arrays.sort(filesArray);
-        return filesArray;
+        Collections.sort(filesList);
+        return filesList;
+    }
+
+    private Uri buildChildrenUri(String workingDir) {
+        Uri directoryPathUri = Uri.parse(workingDir);
+        return DocumentsContract.buildChildDocumentsUriUsingTree(
+                directoryPathUri,
+                DocumentsContract.getTreeDocumentId(directoryPathUri)
+        );
     }
 
     /**
      * Displays a short timed toast message.
+     *
      * @param message a message to be shown in the toast.
      */
     private void displayShortToast(String message) {
@@ -134,6 +137,7 @@ public class NotesRepository implements Repository {
 
     /**
      * Displays a long timed toast message.
+     *
      * @param message a message to be shown in the toast.
      */
     private void displayLongToast(String message) {
@@ -144,17 +148,17 @@ public class NotesRepository implements Repository {
     /////////////////////////// Worker thread methods ///////////////////////////
     */
 
-    public void updateFilesList(String workingDir, MutableLiveData<String[]> liveDataFilesList) {
+    public void updateFilesList(String workingDir, MutableLiveData<List<String>> liveDataFilesList) {
         if (workingDir != null && liveDataFilesList != null) {
-            Observable<String[]> observable = Observable.just(buildFilesArray(workingDir));
+            Observable<List<String>> observable = Observable.just(buildFilesList(workingDir));
 
-            Observer<String[]> observer = new Observer<String[]>() {
+            Observer<List<String>> observer = new Observer<List<String>>() {
                 @Override
                 public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
                 }
 
                 @Override
-                public void onNext(String @io.reactivex.rxjava3.annotations.NonNull [] strings) {
+                public void onNext(@io.reactivex.rxjava3.annotations.NonNull List<String> strings) {
                     liveDataFilesList.postValue(strings);
                 }
 
@@ -176,7 +180,7 @@ public class NotesRepository implements Repository {
         }
     }
 
-    public void deleteFile(File file, MutableLiveData<String[]> liveDataFilesList) {
+    public void deleteFile(File file, MutableLiveData<List<String>> liveDataFilesList) {
         if (file != null) {
             Observable<Boolean> observable = Observable.just(file.delete());
 
@@ -200,7 +204,7 @@ public class NotesRepository implements Repository {
 
                 @Override
                 public void onComplete() {
-                    updateFilesList(file.getWorkingDir() ,liveDataFilesList);
+                    updateFilesList(file.getWorkingDir(), liveDataFilesList);
                 }
             };
 

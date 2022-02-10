@@ -4,6 +4,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.rustamft.notesft.models.File;
 
+import java.util.List;
+
 public interface Repository {
 
     /**
@@ -47,14 +49,14 @@ public interface Repository {
      * Reads the working directory contents and builds a files list.
      * @param liveDataFilesList a files list LiveData to update with the files list.
      */
-    void updateFilesList(String workingDir, MutableLiveData<String[]> liveDataFilesList);
+    void updateFilesList(String workingDir, MutableLiveData<List<String>> liveDataFilesList);
 
     /**
      * Deletes a given file.
      * @param file the note file instance.
      * @param liveDataFilesList a files list LiveData to update.
      */
-    void deleteFile(File file, MutableLiveData<String[]> liveDataFilesList);
+    void deleteFile(File file, MutableLiveData<List<String>> liveDataFilesList);
 
     /**
      * Renames a given file.

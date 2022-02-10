@@ -33,6 +33,8 @@ import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
 import com.rustamft.notesft.screens.editor.EditorFragment;
 
+import java.util.List;
+
 public class ListFragment extends Fragment {
     private ListViewModel mListViewModel;
 
@@ -75,17 +77,14 @@ public class ListFragment extends Fragment {
         // Restore UI night mode state.
         AppCompatDelegate.setDefaultNightMode(mListViewModel.getNightMode());
         // Get LiveData reference
-        LiveData<String[]> notesListLiveData = mListViewModel.getNotesListLiveData();
+        LiveData<List<String>> notesListLiveData = mListViewModel.getNotesListLiveData();
         // Initialize adapter
-        ListAdapter adapter = new ListAdapter(getContext()) {
+        NotesListAdapter adapter = new NotesListAdapter(this, notesListLiveData) {
             @Override
             void onItemClick(String itemName) {
                 navigateNext(itemName);
             }
         };
-        // Observe notes list changes to update RecyclerView adapter
-        notesListLiveData.observe(getViewLifecycleOwner(),
-                o -> adapter.setNotesList(notesListLiveData.getValue()));
         // Initialize and fill the RecyclerView
         RecyclerView recyclerView = view.findViewById(R.id.recyclerview_list);
         recyclerView.setAdapter(adapter);
