@@ -1,15 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".screens.permission.PermissionFragment">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <Button
-        android:id="@+id/button_permission"
-        style="@style/Button"
-        android:layout_gravity="center"
-        android:text="@string/choose_directory"
-        android:theme="@style/Button" />
+    <data>
 
-</FrameLayout>
+        <variable
+            name="fragment"
+            type="com.rustamft.notesft.screens.permission.PermissionFragment" />
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".screens.permission.PermissionFragment">
+
+        <Button
+            android:id="@+id/button_permission"
+            style="@style/Button"
+            android:layout_gravity="center"
+            android:onClick="@{() -> fragment.chooseWorkingDir()}"
+            android:text="@string/choose_directory"
+            android:theme="@style/Button" />
+
+    </FrameLayout>
+</layout>

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.activity.result.ActivityResult;
 import androidx.annotation.NonNull;
@@ -17,45 +16,57 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.databinding.FragmentPermissionBinding;
 import com.rustamft.notesft.utils.BetterActivityResult;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class PermissionFragment extends Fragment {
-    private BetterActivityResult<Intent, ActivityResult> mActivityLauncher;
-    private PermissionViewModel mPermissionViewModel;
+
+    private PermissionViewModel viewModel;
+    private FragmentPermissionBinding binding;
+    private BetterActivityResult<Intent, ActivityResult> activityLauncher;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_permission, container, false);
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState
+    ) {
+        binding = FragmentPermissionBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        viewModel = new ViewModelProvider(this).get(PermissionViewModel.class);
+        binding.setFragment(this);
         // Register this fragment to receive the requestPermission result
-        mActivityLauncher = BetterActivityResult.registerActivityForResult(this);
-        // Get ViewModel
-        mPermissionViewModel = new ViewModelProvider(this).get(PermissionViewModel.class);
-        // Arguments
-        Bundle args = getArguments();
-        if (args != null) { // If it is dir changing from the list fragment
+        activityLauncher = BetterActivityResult.registerActivityForResult(this);
+        if (getArguments() != null) { // If it is dir changing from the list fragment
             chooseWorkingDir();
-        } else if (mPermissionViewModel.hasPermission()) { // If the app can read files in the dir
+        } else if (viewModel.hasPermission()) { // If the app can read files in the dir
             navigateNext();
         }
-        Button button = view.findViewById(R.id.button_permission);
-        button.setOnClickListener(v -> chooseWorkingDir());
     }
 
-    void chooseWorkingDir() {
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    public void chooseWorkingDir() {
         // Open dir choosing dialog
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        mActivityLauncher.launch(intent, result -> {
+        activityLauncher.launch(intent, result -> {
             if (result.getResultCode() == Activity.RESULT_OK) {
                 Intent data = result.getData();
                 // Save to shared preferences and persist permission
-                mPermissionViewModel.setWorkingDir(data);
+                viewModel.setWorkingDir(data);
                 navigateNext(); // Show notes list fragment
             }
         });

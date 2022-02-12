@@ -6,7 +6,22 @@ import com.rustamft.notesft.models.File;
 
 import java.util.List;
 
+import javax.inject.Singleton;
+
+import dagger.Binds;
+import dagger.Module;
+import dagger.hilt.InstallIn;
+import dagger.hilt.components.SingletonComponent;
+
 public interface Repository {
+
+    @Module
+    @InstallIn(SingletonComponent.class)
+    abstract class RepositoryModule {
+        @Binds
+        @Singleton
+        abstract Repository bindSharedPrefs(NotesRepository repository);
+    }
 
     /**
      * Returns a name of a given file.
@@ -14,13 +29,6 @@ public interface Repository {
      * @return a String with the file name.
      */
     String getFileName(File file);
-
-    /**
-     * Reads a text this file contains.
-     * @param file the note file instance.
-     * @return a String with the file text.
-     */
-    String buildStringFromFileContent(File file);
 
     /**
      * Returns the length of this file in bytes.

@@ -10,18 +10,21 @@ import android.net.Uri;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.rustamft.notesft.utils.Constants;
+
 import java.util.List;
 
-public class NotesSharedPrefs implements SharedPrefs {
-    private final Application mApplication;
-    private final SharedPreferences mSharedPrefs;
-    private final String NIGHT_MODE = "night_mode";
-    private final String WORKING_DIR_KEY = "working_dir";
+import javax.inject.Inject;
 
+public class NotesSharedPrefs implements SharedPrefs {
+
+    private final Application application;
+    private final SharedPreferences sharedPrefs;
+
+    @Inject
     public NotesSharedPrefs(Application application) {
-        mApplication = application;
-        final String SHARED_PREF_FILE = "com.rustamft.notesft.shared_preferences";
-        mSharedPrefs = application.getSharedPreferences(SHARED_PREF_FILE, MODE_PRIVATE);
+        this.application = application;
+        sharedPrefs = application.getSharedPreferences(Constants.SHARED_PREF_FILE, MODE_PRIVATE);
     }
 
     public boolean hasPermission() {
@@ -33,7 +36,7 @@ public class NotesSharedPrefs implements SharedPrefs {
         }
         // Check permission
         List<UriPermission> permissionsList =
-                mApplication.getContentResolver().getPersistedUriPermissions();
+                application.getContentResolver().getPersistedUriPermissions();
 
         if (permissionsList.size() != 0) {
             for (UriPermission permission : permissionsList) {
@@ -49,14 +52,14 @@ public class NotesSharedPrefs implements SharedPrefs {
     }
 
     public void setNightMode(int mode) {
-        mSharedPrefs
+        sharedPrefs
                 .edit()
-                .putInt(NIGHT_MODE, mode)
+                .putInt(Constants.NIGHT_MODE, mode)
                 .apply();
     }
 
     public int getNightMode() {
-        return mSharedPrefs.getInt(NIGHT_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        return sharedPrefs.getInt(Constants.NIGHT_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
     }
 
     public void setWorkingDir(Intent resultData) {
@@ -65,16 +68,16 @@ public class NotesSharedPrefs implements SharedPrefs {
         // Persist the permission.
         final int flags =
                 Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-        mApplication.getContentResolver().takePersistableUriPermission(directoryUri, flags);
+        application.getContentResolver().takePersistableUriPermission(directoryUri, flags);
         // Save to SharedPrefs.
         String workingDir = directoryUri.toString();
-        mSharedPrefs
+        sharedPrefs
                 .edit()
-                .putString(WORKING_DIR_KEY, workingDir)
+                .putString(Constants.WORKING_DIR_KEY, workingDir)
                 .apply();
     }
 
     public String getWorkingDir() {
-        return mSharedPrefs.getString(WORKING_DIR_KEY, null);
+        return sharedPrefs.getString(Constants.WORKING_DIR_KEY, null);
     }
 }

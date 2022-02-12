@@ -1,35 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".screens.editor.EditorFragment">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ScrollView
+    <data>
+
+        <variable
+            name="fragment"
+            type="com.rustamft.notesft.screens.editor.EditorFragment" />
+
+        <variable
+            name="viewModel"
+            type="com.rustamft.notesft.screens.editor.EditorViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:context=".screens.editor.EditorFragment">
 
-        <EditText
-            android:id="@+id/edittext_note"
-            style="@style/EditText"
-            android:importantForAutofill="no"
-            android:labelFor="@id/edittext_note"
-            android:theme="@style/EditText"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    </ScrollView>
+            <EditText
+                android:id="@+id/edittext_note"
+                style="@style/EditText"
+                android:importantForAutofill="no"
+                android:labelFor="@id/edittext_note"
+                android:onTextChanged="@{() -> fragment.onEditTextChanged()}"
+                android:text="@{viewModel.noteText}"
+                android:theme="@style/EditText"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_save"
-        style="@style/FAB"
-        android:contentDescription="@string/action_save"
-        android:src="@drawable/ic_save"
-        android:theme="@style/FAB"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        </ScrollView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_save"
+            style="@style/FAB"
+            android:contentDescription="@string/action_save"
+            android:onClick="@{() -> fragment.onSaveFabClick()}"
+            android:src="@drawable/ic_save"
+            android:theme="@style/FAB"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

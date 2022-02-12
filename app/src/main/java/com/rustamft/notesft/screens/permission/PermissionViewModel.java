@@ -1,37 +1,39 @@
 package com.rustamft.notesft.screens.permission;
 
-import android.app.Application;
 import android.content.Intent;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.ViewModel;
 
 import com.rustamft.notesft.database.SharedPrefs;
-import com.rustamft.notesft.utils.Dic;
 
-public class PermissionViewModel extends AndroidViewModel {
-    private final SharedPrefs mSharedPrefs;
+import javax.inject.Inject;
 
-    public PermissionViewModel(@NonNull Application application) {
-        super(application);
+import dagger.hilt.android.lifecycle.HiltViewModel;
 
-        Dic dic = new Dic(application);
-        mSharedPrefs = dic.getSharedPrefs();
+@HiltViewModel
+public class PermissionViewModel extends ViewModel {
+    private final SharedPrefs prefs;
+
+    @Inject
+    PermissionViewModel(SharedPrefs prefs) {
+        this.prefs = prefs;
     }
 
     /**
      * Checks if the app has the files read/write permission.
+     *
      * @return true if the permission is granted, otherwise - false.
      */
     boolean hasPermission() {
-        return mSharedPrefs.hasPermission();
+        return prefs.hasPermission();
     }
 
     /**
      * Sets the working directory for the app.
+     *
      * @param resultData a data result from a folder chooser intent.
      */
     void setWorkingDir(Intent resultData) {
-        mSharedPrefs.setWorkingDir(resultData);
+        prefs.setWorkingDir(resultData);
     }
 }

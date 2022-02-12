@@ -6,6 +6,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.rustamft.notesft.R;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
 
     @Override

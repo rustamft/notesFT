@@ -4,90 +4,82 @@ import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.databinding.ListItemBinding;
 
 import java.util.List;
 import java.util.Objects;
 
-class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ListViewHolder> {
+public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewHolder> {
 
-    private final Fragment mOwner;
-    private final LiveData<List<String>> mLiveData; // Cached copy of notes list
+    private final ListFragment owner;
+    private final LiveData<List<String>> notesList; // Cached copy of notes list
 
-    NotesListAdapter(Fragment owner, LiveData<List<String>> liveData) {
+    NotesListAdapter(ListFragment owner, LiveData<List<String>> notesList) {
         super(new DiffCallback());
-        mOwner = owner;
-        mLiveData = liveData;
-        mLiveData.observe(mOwner.getViewLifecycleOwner(), o -> submitList(mLiveData.getValue()));
+        this.owner = owner;
+        this.notesList = notesList;
+        this.notesList.observe(this.owner.getViewLifecycleOwner(), o -> submitList(this.notesList.getValue()));
     }
 
     @NonNull
     @Override
-    public ListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(mOwner.getContext())
-                .inflate(R.layout.recyclerview_item, parent, false);
-        return new ListViewHolder(itemView);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        ListItemBinding binding = ListItemBinding.inflate(
+                LayoutInflater.from(parent.getContext()),
+                parent,
+                false
+        );
+        binding.setFragment(owner);
+        return new ViewHolder(binding);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ListViewHolder holder, int position) {
-        String current = getNoteAtPosition(position);
-        holder.mNoteItemView.setText(current);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        final String current = getNoteAtPosition(position);
+        holder.bind(current);
     }
 
     @Override
     public int getItemCount() {
-        if (mLiveData.getValue() == null) {
+        if (notesList.getValue() == null) {
             return 0;
         } else {
-            return mLiveData.getValue().size();
+            return notesList.getValue().size();
         }
     }
 
     String getNoteAtPosition(int position) {
-        return Objects.requireNonNull(mLiveData.getValue()).get(position);
-    }
-
-    void onItemClick(String itemName) {
-        // To be overridden by an upper class.
+        return Objects.requireNonNull(notesList.getValue()).get(position);
     }
 
 
+    static class ViewHolder extends RecyclerView.ViewHolder
+            implements View.OnCreateContextMenuListener {
 
-    class ListViewHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener, View.OnCreateContextMenuListener {
+        private final ListItemBinding binding;
 
-        final View mView;
-        private final TextView mNoteItemView;
-
-        private ListViewHolder(View itemView) {
-            super(itemView);
-            mView = itemView;
-            mNoteItemView = itemView.findViewById(R.id.textView);
-            itemView.setOnClickListener(this);
-            itemView.setOnCreateContextMenuListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            int position = getLayoutPosition();
-            String noteName = getNoteAtPosition(position);
-            onItemClick(noteName);
+        ViewHolder(ListItemBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
 
         @Override
         public void onCreateContextMenu(ContextMenu menu, View v,
                                         ContextMenu.ContextMenuInfo menuInfo) {
             menu.add(this.getAdapterPosition(), 0, 0, R.string.action_remove);
+        }
+
+        void bind(String string) {
+            binding.textView.setText(string);
+            binding.textView.setOnCreateContextMenuListener(this);
         }
     }
 

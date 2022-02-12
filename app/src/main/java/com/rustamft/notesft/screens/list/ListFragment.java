@@ -21,35 +21,37 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
-import com.rustamft.notesft.screens.editor.EditorFragment;
+import com.rustamft.notesft.databinding.FragmentListBinding;
+import com.rustamft.notesft.utils.Constants;
 
-import java.util.List;
+import dagger.hilt.android.AndroidEntryPoint;
 
+@AndroidEntryPoint
 public class ListFragment extends Fragment {
-    private ListViewModel mListViewModel;
+
+    private ListViewModel viewModel;
+    private FragmentListBinding binding;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // To make onCreateOptionsMenu work
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(true); // To make onCreateOptionsMenu work.
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_list, container, false);
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState
+    ) {
+        binding = FragmentListBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -61,8 +63,8 @@ public class ListFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        if (mListViewModel.hasPermission()) {
-            mListViewModel.updateNotesList();
+        if (viewModel.hasPermission()) {
+            viewModel.updateNotesList();
         } else {
             navigateBack(false);
         }
@@ -71,28 +73,13 @@ public class ListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Initialize ViewModel
-        mListViewModel = new ViewModelProvider(this).get(ListViewModel.class);
-        // Restore UI night mode state.
-        AppCompatDelegate.setDefaultNightMode(mListViewModel.getNightMode());
-        // Get LiveData reference
-        LiveData<List<String>> notesListLiveData = mListViewModel.getNotesListLiveData();
-        // Initialize adapter
-        NotesListAdapter adapter = new NotesListAdapter(this, notesListLiveData) {
-            @Override
-            void onItemClick(String itemName) {
-                navigateNext(itemName);
-            }
-        };
-        // Initialize and fill the RecyclerView
-        RecyclerView recyclerView = view.findViewById(R.id.recyclerview_list);
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        registerForContextMenu(recyclerView);
-        // Initialize and activate add FAB
-        FloatingActionButton fabAdd = view.findViewById(R.id.fab_add);
-        fabAdd.setOnClickListener(v -> promptCreation());
+        viewModel = new ViewModelProvider(this).get(ListViewModel.class);
+        binding.setFragment(this);
+        binding.setAdapter(
+                new NotesListAdapter(this, viewModel.getNotesListLiveData())
+        );
+        AppCompatDelegate.setDefaultNightMode(viewModel.getNightMode());
+        registerForContextMenu(binding.recyclerviewList);
     }
 
     @Override
@@ -106,7 +93,7 @@ public class ListFragment extends Fragment {
             case ACTION_REFRESH_ID:
                 View refreshAction = requireActivity().findViewById(R.id.action_refresh);
                 animateRotation(refreshAction);
-                mListViewModel.updateNotesList();
+                viewModel.updateNotesList();
                 return true;
             case ACTION_CHOOSE_DIR_ID:
                 promptNavigateBack();
@@ -115,7 +102,7 @@ public class ListFragment extends Fragment {
                 switchNightMode();
                 return true;
             case ACTION_ABOUT_APP_ID:
-                showAboutApp();
+                displayAboutApp();
                 return true;
         }
 
@@ -126,12 +113,45 @@ public class ListFragment extends Fragment {
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == 0) {
             int position = item.getGroupId();
-            String noteName = mListViewModel.getNoteNameAtPosition(position);
+            String noteName = viewModel.getNoteNameAtPosition(position);
             promptDeletion(noteName);
             return true;
         }
 
         return super.onContextItemSelected(item);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    public void promptCreation() {
+        final View view = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
+        final EditText editText = view.findViewById(R.id.edittext_dialog);
+        // Alert builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.new_note)
+                .setView(view)
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
+                    // Apply button clicked
+                    String name = editText.getText().toString();
+                    if (viewModel.createNote(name)) {
+                        navigateNext(name);
+                    }
+                }))
+                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
+                    // Cancel button clicked
+                }));
+        builder.show();
+    }
+
+    public void navigateNext(String noteName) {
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.NOTE_NAME, noteName);
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.action_listFragment_to_editorFragment, bundle);
     }
 
     private void animateRotation(View view) {
@@ -153,7 +173,7 @@ public class ListFragment extends Fragment {
         // Do the UI switch.
         AppCompatDelegate.setDefaultNightMode(mode);
         // Remember the choice.
-        mListViewModel.setNightMode(mode);
+        viewModel.setNightMode(mode);
         // Hide Up button from ActionBar.
         ActionBar actionBar = ((MainActivity) requireActivity()).getSupportActionBar();
         if (actionBar != null) {
@@ -161,9 +181,9 @@ public class ListFragment extends Fragment {
         }
     }
 
-    private void showAboutApp() {
+    private void displayAboutApp() {
         String message =
-                getString(R.string.about_app_content) + mListViewModel.getAppVersion();
+                getString(R.string.about_app_content) + viewModel.getAppVersion();
         // Alert builder
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.about_app)
@@ -187,26 +207,6 @@ public class ListFragment extends Fragment {
         }
     }
 
-    private void promptCreation() {
-        final View view = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
-        final EditText editText = view.findViewById(R.id.edittext_dialog);
-        // Alert builder
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.new_note)
-                .setView(view)
-                .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
-                    // Apply button clicked
-                    String name = editText.getText().toString();
-                    if (mListViewModel.createNote(name)) {
-                        navigateNext(name);
-                    }
-                }))
-                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
-                    // Cancel button clicked
-                }));
-        builder.show();
-    }
-
     private void promptDeletion(String noteName) {
         String message = getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
         // Alert builder
@@ -215,7 +215,7 @@ public class ListFragment extends Fragment {
                 .setMessage(message)
                 .setPositiveButton(R.string.action_yes, (dialog, which) -> {
                     // Yes button clicked
-                    mListViewModel.deleteNote(noteName);
+                    viewModel.deleteNote(noteName);
                 })
                 .setNegativeButton(R.string.action_no, (dialog, which) -> {
                     // No button clicked
@@ -235,13 +235,6 @@ public class ListFragment extends Fragment {
                     // No button clicked
                 });
         builder.show();
-    }
-
-    private void navigateNext(String noteName) {
-        Bundle bundle = new Bundle();
-        bundle.putString(EditorFragment.NOTE_NAME, noteName);
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.action_listFragment_to_editorFragment, bundle);
     }
 
     private void navigateBack(boolean straightToChoosing) {

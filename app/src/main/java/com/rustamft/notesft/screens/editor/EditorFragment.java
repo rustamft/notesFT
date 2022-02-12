@@ -1,8 +1,6 @@
 package com.rustamft.notesft.screens.editor;
 
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,39 +23,43 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
+import com.rustamft.notesft.databinding.FragmentEditorBinding;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class EditorFragment extends Fragment {
-    public static final String NOTE_NAME = "com.rustamft.notesft.NOTE_NAME";
-    EditorViewModel mEditorViewModel;
-    private String mNoteName;
-    OnBackPressedCallback mCallback;
+
+    private EditorViewModel viewModel;
+    private FragmentEditorBinding binding;
+    OnBackPressedCallback callback;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // To make onCreateOptionsMenu work
         setHasOptionsMenu(true);
-        // Get note name
-        if (getArguments() != null) {
-            mNoteName = getArguments().getString(NOTE_NAME);
-        }
         // Modify PopUp (back) action behavior
-        mCallback = new OnBackPressedCallback(true) {
+        callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 onBackPressed();
             }
         };
-        requireActivity().getOnBackPressedDispatcher().addCallback(this.mCallback);
+        requireActivity().getOnBackPressedDispatcher().addCallback(this.callback);
         // Display ActionBar back button
         setActionBarBackEnabled(true);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_editor, container, false);
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState
+    ) {
+        binding = FragmentEditorBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -78,7 +80,7 @@ public class EditorFragment extends Fragment {
                 promptRename();
                 return true;
             case ACTION_ABOUT_NOTE_ID:
-                showAboutNote();
+                displayAboutNote();
                 return true;
         }
 
@@ -86,70 +88,54 @@ public class EditorFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        // ViewModel
-        mEditorViewModel = new ViewModelProvider(this)
-                .get(EditorViewModel.class);
-        mEditorViewModel.setCurrentNote(mNoteName);
-        // Observe toolbar title changes
-        MainActivity mainActivity = ((MainActivity) requireActivity());
-        mEditorViewModel.registerActionBarTitleObserver(mainActivity);
-        // Register LifeCycle observer to reset toolbar title
-        getLifecycle().addObserver(mEditorViewModel);
-        // Initialize save FAB
-        FloatingActionButton saveFAB = view.findViewById(R.id.fab_save);
-        // Fill and activate EditText view
-        EditText editText = view.findViewById(R.id.edittext_note);
-        editText.setText(mEditorViewModel.readTextFromNote());
-        TextWatcher textWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (saveFAB.getVisibility() != View.VISIBLE) {
-                    animateFade(saveFAB, 0f, 1f);
-                }
-            }
-        };
-        editText.addTextChangedListener(textWatcher);
-        // Activate save FAB
-        saveFAB.setOnClickListener(v -> {
-            String noteText = editText.getText().toString();
-            mEditorViewModel.saveTextToNote(noteText);
-            animateFade(saveFAB, 1f, 0f);
-        });
+    public void onResume() {
+        super.onResume();
+        // The PopUp callback is not triggered without this.
+        requireActivity().getOnBackPressedDispatcher().addCallback(this.callback);
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(EditorViewModel.class);
+        binding.setFragment(this);
+        binding.setViewModel(viewModel);
+        viewModel.registerActionBarTitleObserver((MainActivity) requireActivity());
+        // Register LifeCycle observer to reset toolbar title.
+        getLifecycle().addObserver(viewModel);
+    }
 
-        // The PopUp callback is not triggered without this
-        requireActivity().getOnBackPressedDispatcher().addCallback(this.mCallback);
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    public void onSaveFabClick() {
+        String noteText = binding.edittextNote.getText().toString();
+        viewModel.saveNoteText(noteText);
+        animateFade(binding.fabSave, 1f, 0f);
+    }
+
+    public void onEditTextChanged() {
+        if (binding.fabSave.getVisibility() != View.VISIBLE) {
+            animateFade(binding.fabSave, 0f, 1f);
+        }
     }
 
     private void animateFade(View view, float from, float to) {
         boolean fadeIn = view.getVisibility() != View.VISIBLE;
-        if (fadeIn) view.setVisibility(View.VISIBLE);
-
-        // Create and start the animation
+        if (fadeIn) {
+            view.setVisibility(View.VISIBLE);
+        }
         AlphaAnimation fadeAnimation = new AlphaAnimation(from, to);
         fadeAnimation.setDuration(500);
         view.startAnimation(fadeAnimation);
-
-        // If fading out, hide the view after animation is ended
+        // If fading out, hide the view after animation is ended.
         if (!fadeIn) view.postDelayed(() -> view.setVisibility(View.GONE), 500);
     }
 
-    private void unsavedTextAlert() {
+    private void promptUnsavedText() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.unsaved_changes)
                 .setMessage(R.string.what_to_do)
@@ -157,7 +143,7 @@ public class EditorFragment extends Fragment {
                     // Save button clicked
                     EditText editText = requireView().findViewById(R.id.edittext_note);
                     String noteText = editText.getText().toString();
-                    mEditorViewModel.saveTextToNote(noteText);
+                    viewModel.saveNoteText(noteText);
                     navigateBack();
                 })
                 .setNegativeButton(R.string.action_cancel, (dialog, which) -> {
@@ -173,7 +159,7 @@ public class EditorFragment extends Fragment {
     private void promptRename() {
         final View view = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
         final EditText editText = view.findViewById(R.id.edittext_dialog);
-        editText.setText(mEditorViewModel.getNoteName());
+        editText.setText(viewModel.getNoteName());
         // Alert builder
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.rename_note)
@@ -181,7 +167,7 @@ public class EditorFragment extends Fragment {
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
                     // Apply button clicked
                     String newName = editText.getText().toString();
-                    mEditorViewModel.renameNote(newName);
+                    viewModel.renameNote(newName);
                 }))
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
                     // Cancel button clicked
@@ -189,12 +175,12 @@ public class EditorFragment extends Fragment {
         builder.show();
     }
 
-    private void showAboutNote() {
-        String size = getString(R.string.about_note_file_size) + mEditorViewModel.getNoteSize() +
+    private void displayAboutNote() {
+        String size = getString(R.string.about_note_file_size) + viewModel.getNoteSize() +
                 getString(R.string.about_note_byte);
         String lastModified = getString(R.string.about_note_last_modified) +
-                mEditorViewModel.getNoteLastModified();
-        String path = getString(R.string.about_note_file_path) + mEditorViewModel.getNotePath();
+                viewModel.getNoteLastModified();
+        String path = getString(R.string.about_note_file_path) + viewModel.getNotePath();
         String message = size + "\n\n" + lastModified + "\n\n" + path;
         // Alert builder
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
@@ -232,7 +218,7 @@ public class EditorFragment extends Fragment {
     private void onBackPressed() {
         FloatingActionButton saveFAB = requireView().findViewById(R.id.fab_save);
         if (saveFAB.getVisibility() == View.VISIBLE) {
-            unsavedTextAlert();
+            promptUnsavedText();
         } else navigateBack();
     }
 }
