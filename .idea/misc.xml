@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../../layout/custom_preview.xml" value="0.346875" />
+        <entry key="app/src/main/res/drawable/ic_switch_night.xml" value="0.2025" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.32760416666666664" />
         <entry key="app/src/main/res/layout/dialog_create.xml" value="0.32760416666666664" />
         <entry key="app/src/main/res/layout/dialog_edittext.xml" value="0.32760416666666664" />

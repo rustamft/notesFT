@@ -1,7 +1,5 @@
 package com.rustamft.notesft.models;
 
-import java.io.IOException;
-
 public interface File {
 
     /**

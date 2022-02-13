@@ -200,7 +200,7 @@ public class ListFragment extends Fragment {
 
     private void openGitHub() {
         Context context = requireContext();
-        Uri webPage = Uri.parse("https://github.com/rustamft/notesFT");
+        Uri webPage = Uri.parse(Constants.GITHUB_LINK);
         Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
         if (intent.resolveActivity(context.getPackageManager()) != null) {
             startActivity(intent);
