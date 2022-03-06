@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -19,14 +20,20 @@ import java.util.Objects;
 
 public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewHolder> {
 
-    private final ListFragment owner;
+    private final ListViewModel viewModel;
     private final LiveData<List<String>> notesList; // Cached copy of notes list
 
-    NotesListAdapter(ListFragment owner, LiveData<List<String>> notesList) {
+    NotesListAdapter(
+            Fragment owner,
+            ListViewModel viewModel
+    ) {
         super(new DiffCallback());
-        this.owner = owner;
-        this.notesList = notesList;
-        this.notesList.observe(this.owner.getViewLifecycleOwner(), o -> submitList(this.notesList.getValue()));
+        this.viewModel = viewModel;
+        this.notesList = viewModel.getNotesList();
+        this.notesList.observe(
+                owner.getViewLifecycleOwner(),
+                o -> submitList(this.notesList.getValue())
+        );
     }
 
     @NonNull
@@ -37,7 +44,7 @@ public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewH
                 parent,
                 false
         );
-        binding.setFragment(owner);
+        binding.setViewModel(viewModel);
         return new ViewHolder(binding);
     }
 

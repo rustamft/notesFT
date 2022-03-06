@@ -1,0 +1,7 @@
+<resources>
+    <dimen name="corner_radius">5dp</dimen>
+    <dimen name="margin_big">12dp</dimen>
+    <dimen name="margin_fab">16dp</dimen>
+    <dimen name="margin_standard">9dp</dimen>
+    <dimen name="text_size_standard">18sp</dimen>
+</resources>

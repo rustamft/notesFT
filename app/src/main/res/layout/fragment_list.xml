@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
         <variable
-            name="fragment"
-            type="com.rustamft.notesft.screens.list.ListFragment" />
+            name="viewModel"
+            type="com.rustamft.notesft.screens.list.ListViewModel" />
 
         <variable
             name="adapter"
             type="com.rustamft.notesft.screens.list.NotesListAdapter" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:tools="http://schemas.android.com/tools"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".screens.list.ListFragment">
@@ -23,7 +24,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:adapter="@{adapter}"
-            android:background="@color/gray"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -32,13 +32,15 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_add"
-            style="@style/FAB"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_fab"
             android:contentDescription="@string/action_add"
-            android:onClick="@{() -> fragment.promptCreation()}"
+            android:onClick="@{(view) -> viewModel.promptCreation(view)}"
             android:src="@drawable/ic_add"
-            android:theme="@style/FAB"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toRightOf="parent" />
+            app:layout_constraintRight_toRightOf="parent"
+            app:tint="?colorOnPrimary" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

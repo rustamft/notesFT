@@ -2,16 +2,30 @@ package com.rustamft.notesft.screens.list;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
+import android.widget.EditText;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
+import com.rustamft.notesft.R;
 import com.rustamft.notesft.database.Repository;
 import com.rustamft.notesft.database.SharedPrefs;
 import com.rustamft.notesft.models.File;
 import com.rustamft.notesft.models.NoteFile;
+import com.rustamft.notesft.utils.Constants;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +54,60 @@ public class ListViewModel extends ViewModel {
         this.repository = repository;
     }
 
+    public void navigateNext(View view, String noteName) {
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.NOTE_NAME, noteName);
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(R.id.action_listFragment_to_editorFragment, bundle);
+    }
+
+    public void navigateBack(View view) {
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(R.id.action_listFragment_to_permissionFragment);
+    }
+
+    public void promptCreation(View view) {
+        final Context context = view.getContext();
+        final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
+        final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.new_note)
+                .setView(dialogView)
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
+                    String name = editText.getText().toString();
+                    if (createNote(name)) {
+                        navigateNext(view, name);
+                    }
+                }))
+                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
+                    // Cancel.
+                }))
+                .show();
+    }
+
+    public void promptNavigateBack(View view) {
+        new AlertDialog.Builder(view.getContext())
+                .setTitle(R.string.please_confirm)
+                .setMessage(R.string.are_you_sure_change_dir)
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> navigateBackStraightToChoosing(view))
+                .setNegativeButton(R.string.action_no, (dialog, which) -> {
+                    // Cancel.
+                })
+                .show();
+    }
+
+    public void promptDeletion(Context context, String noteName) {
+        String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.please_confirm)
+                .setMessage(message)
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> deleteNote(noteName))
+                .setNegativeButton(R.string.action_no, (dialog, which) -> {
+                    // Cancel.
+                })
+                .show();
+    }
+
     /**
      * Checks if the app has the files read/write permission.
      *
@@ -54,7 +122,7 @@ public class ListViewModel extends ViewModel {
      *
      * @return the MutableLiveData stored in the ViewModel.
      */
-    MutableLiveData<List<String>> getNotesListLiveData() {
+    MutableLiveData<List<String>> getNotesList() {
         return notesList;
     }
 
@@ -63,10 +131,6 @@ public class ListViewModel extends ViewModel {
      */
     void updateNotesList() {
         repository.updateFilesList(prefs.getWorkingDir(), notesList);
-    }
-
-    void setNightMode(int mode) {
-        prefs.setNightMode(mode);
     }
 
     int getNightMode() {
@@ -83,18 +147,40 @@ public class ListViewModel extends ViewModel {
         return Objects.requireNonNull(notesList.getValue()).get(position);
     }
 
-    /**
-     * Deletes a note file with the given name.
-     *
-     * @param noteName a name of a note to be deleted.
-     */
-    void deleteNote(String noteName) {
-        File file = new NoteFile(
-                application.getApplicationContext(),
-                prefs.getWorkingDir(),
-                noteName
-        );
-        repository.deleteFile(file, notesList);
+    void switchNightMode() {
+        int mode = AppCompatDelegate.getDefaultNightMode();
+        if (mode != AppCompatDelegate.MODE_NIGHT_YES) {
+            mode = AppCompatDelegate.MODE_NIGHT_YES;
+        } else {
+            mode = AppCompatDelegate.MODE_NIGHT_NO;
+        }
+        AppCompatDelegate.setDefaultNightMode(mode);
+        prefs.setNightMode(mode);
+    }
+
+    void displayAboutApp(Context context) {
+        String message =
+                context.getString(R.string.about_app_content) + getAppVersion();
+        AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                .setTitle(R.string.about_app)
+                .setMessage(message)
+                .setPositiveButton(R.string.action_close, (dialog, which) -> {
+                    // Close.
+                })
+                .setNegativeButton("GitHub", (dialog, which) -> {
+                    // Open GitHub.
+                    openGitHub(context);
+                });
+        builder.show();
+    }
+
+    void animateRotation(View view) {
+        RotateAnimation rotate = new RotateAnimation(0, 360,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f);
+        rotate.setDuration(500);
+        rotate.setInterpolator(new LinearInterpolator());
+        view.startAnimation(rotate);
     }
 
     /**
@@ -103,7 +189,7 @@ public class ListViewModel extends ViewModel {
      * @param noteName a name of a note to be created.
      * @return true if the file has been created successfully, otherwise - false.
      */
-    boolean createNote(String noteName) {
+    private boolean createNote(String noteName) {
         File file = new NoteFile(
                 application.getApplicationContext(),
                 prefs.getWorkingDir(),
@@ -113,11 +199,26 @@ public class ListViewModel extends ViewModel {
     }
 
     /**
-     * Getter for the app version stored in the ViewModel, if there's none stored it builds one.
+     * Deletes a note file with the given name.
      *
-     * @return a String with the app version or "Not available" if it couldn't build one.
+     * @param noteName a name of a note to be deleted.
      */
-    String getAppVersion() {
+    private void deleteNote(String noteName) {
+        File file = new NoteFile(
+                application.getApplicationContext(),
+                prefs.getWorkingDir(),
+                noteName
+        );
+        repository.deleteFile(file, notesList);
+    }
+
+    private void navigateBackStraightToChoosing(View view) {
+        NavController navController = Navigation.findNavController(view);
+        Bundle bundle = new Bundle();
+        navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
+    }
+
+    private String getAppVersion() {
         if (appVersion.equals("Not available")) {
             try {
                 Context context = application.getApplicationContext();
@@ -129,5 +230,13 @@ public class ListViewModel extends ViewModel {
             }
         }
         return appVersion;
+    }
+
+    private void openGitHub(Context context) {
+        Uri webPage = Uri.parse(Constants.GITHUB_LINK);
+        Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            context.startActivity(intent);
+        }
     }
 }

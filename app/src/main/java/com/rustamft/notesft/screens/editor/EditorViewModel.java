@@ -1,16 +1,20 @@
 package com.rustamft.notesft.screens.editor;
 
 import android.app.Application;
-import android.widget.Toast;
+import android.content.Context;
+import android.view.View;
+import android.view.animation.AlphaAnimation;
+import android.widget.EditText;
 
 import androidx.appcompat.app.ActionBar;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.activities.MainActivity;
 import com.rustamft.notesft.database.Repository;
@@ -24,7 +28,7 @@ import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class EditorViewModel extends ViewModel implements LifecycleObserver {
+public class EditorViewModel extends ViewModel {
 
     private final Application application;
     private final Repository repository;
@@ -54,6 +58,71 @@ public class EditorViewModel extends ViewModel implements LifecycleObserver {
         }
     }
 
+    /**
+     * Before navigating back checks if note has unsaved text and shows an alert if it does
+     */
+    public void onBackPressed(FloatingActionButton fab) {
+        View view = (View) fab.getParent();
+        if (fab.getVisibility() == View.VISIBLE) {
+            promptUnsavedText(view);
+        } else navigateBack(view);
+    }
+
+    public void onSaveFabClick(View view, EditText editText) {
+        String noteText = editText.getText().toString();
+        saveNoteText(noteText);
+        animateFade(view, 1f, 0f);
+    }
+
+    public void onEditTextChanged(View view) {
+        if (view.getVisibility() != View.VISIBLE) {
+            animateFade(view, 0f, 1f);
+        }
+    }
+
+    public void promptRename(View view) {
+        final Context context = view.getContext();
+        final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
+        final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
+        editText.setText(repository.getFileName(note));
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.rename_note)
+                .setView(dialogView)
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
+                    // Apply button clicked
+                    String newName = editText.getText().toString();
+                    repository.renameFile(note, newName, actionBarTitle);
+                }))
+                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
+                    // Cancel button clicked
+                }))
+                .show();
+    }
+
+    public void displayAboutNote(Context context) {
+        String size = context.getString(R.string.about_note_file_size) + note.length() +
+                context.getString(R.string.about_note_byte);
+        String lastModified = context.getString(R.string.about_note_last_modified) +
+                repository.lastModifiedAsString(note);
+        String path = context.getString(R.string.about_note_file_path) + note.path();
+        String message = size + "\n\n" + lastModified + "\n\n" + path;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.about_note)
+                .setMessage(message)
+                .setPositiveButton(R.string.action_close, (dialog, which) -> {
+                    // Close button clicked
+                })
+                .show();
+    }
+
+    /**
+     * Sets the app name to the ActionBar title.
+     */
+    public void resetActionBarTitle() {
+        actionBarTitle.setValue(application.getString(R.string.app_name));
+        actionBarTitle.removeObserver(actionBarTitleObserver);
+    }
+
     boolean isNotNullNorBlank(String string) {
         if (string == null) {
             return false;
@@ -80,16 +149,6 @@ public class EditorViewModel extends ViewModel implements LifecycleObserver {
         }
     }
 
-
-    /**
-     * Sets the app name to the ActionBar title.
-    */
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    void resetActionBarTitle() {
-        actionBarTitle.setValue(application.getString(R.string.app_name));
-        actionBarTitle.removeObserver(actionBarTitleObserver);
-    }
-
     /**
      * Saves the given text to the current note file.
      *
@@ -100,55 +159,43 @@ public class EditorViewModel extends ViewModel implements LifecycleObserver {
     }
 
     /**
-     * Renames the current note file.
-     *
-     * @param newName a new nate for the note.
+     * Straight navigate back in stack without any checks
      */
-    void renameNote(String newName) {
-        repository.renameFile(note, newName, actionBarTitle);
+    private void navigateBack(View view) {
+        NavController navController = Navigation.findNavController(view);
+        navController.popBackStack();
     }
 
-    /**
-     * The current note file full path getter.
-     *
-     * @return a String with a full path.
-     */
-    String getNotePath() {
-        return note.path();
+    private void promptUnsavedText(View view) {
+        new AlertDialog.Builder(view.getContext())
+                .setTitle(R.string.unsaved_changes)
+                .setMessage(R.string.what_to_do)
+                .setPositiveButton(R.string.action_save, (dialog, which) -> {
+                    // Save button clicked
+                    EditText editText = view.findViewById(R.id.edittext_note);
+                    String noteText = editText.getText().toString();
+                    saveNoteText(noteText);
+                    navigateBack(view);
+                })
+                .setNegativeButton(R.string.action_cancel, (dialog, which) -> {
+                    // Cancel button clicked
+                })
+                .setNeutralButton(R.string.action_discard, (dialog, which) -> {
+                    // Discard button clicked
+                    navigateBack(view);
+                })
+                .show();
     }
 
-    /**
-     * The current note file size getter.
-     *
-     * @return a long with the file length.
-     */
-    long getNoteSize() {
-        return repository.getFileLength(note);
-    }
-
-    /**
-     * The current note file last modified made getter.
-     *
-     * @return a String with the file last modified formatted date.
-     */
-    String getNoteLastModified() {
-        return repository.lastModified(note);
-    }
-
-    /**
-     * The current note file name getter.
-     *
-     * @return a String with the file name.
-     */
-    String getNoteName() {
-        return repository.getFileName(note);
-    }
-
-    private void displayShortToast(String message) {
-        Toast.makeText(application, message, Toast.LENGTH_SHORT).show();
-    }
-
-    private void displayLongToast(String message) {
-        Toast.makeText(application, message, Toast.LENGTH_LONG).show();
+    private void animateFade(View view, float from, float to) {
+        boolean fadeIn = view.getVisibility() != View.VISIBLE;
+        if (fadeIn) {
+            view.setVisibility(View.VISIBLE);
+        }
+        AlphaAnimation fadeAnimation = new AlphaAnimation(from, to);
+        fadeAnimation.setDuration(500);
+        view.startAnimation(fadeAnimation);
+        // If fading out, hide the view after animation is ended.
+        if (!fadeIn) view.postDelayed(() -> view.setVisibility(View.GONE), 500);
     }
 }

@@ -1,35 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
 
         <variable
-            name="fragment"
-            type="com.rustamft.notesft.screens.list.ListFragment" />
+            name="viewModel"
+            type="com.rustamft.notesft.screens.list.ListViewModel" />
     </data>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="1dp">
+        android:layout_margin="@dimen/margin_standard"
+        android:orientation="vertical">
 
         <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="?android:colorBackground"
-            app:cardCornerRadius="0dp">
+            style="@style/Card"
+            android:theme="@style/Card">
 
             <TextView
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{() -> fragment.navigateNext(textView.getText().toString())}"
-                android:padding="12dp"
+                android:onClick="@{(view) -> viewModel.navigateNext(view, textView.getText().toString())}"
+                android:padding="@dimen/margin_big"
                 android:text="@string/sample_text"
                 android:textColor="?colorOnSecondary"
-                android:textSize="18sp" />
+                android:textSize="@dimen/text_size_standard" />
 
         </androidx.cardview.widget.CardView>
 

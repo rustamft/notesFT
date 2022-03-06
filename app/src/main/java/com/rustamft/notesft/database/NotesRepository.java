@@ -45,11 +45,7 @@ public class NotesRepository implements Repository {
         }
     }
 
-    public long getFileLength(File file) {
-        return file.length();
-    }
-
-    public String lastModified(File file) {
+    public String lastModifiedAsString(File file) {
         long milliseconds = file.lastModified();
         Instant instant = Instant.ofEpochMilli(milliseconds);
         ZonedDateTime dateTime = instant.atZone(ZoneId.systemDefault());
@@ -241,7 +237,9 @@ public class NotesRepository implements Repository {
     }
 
     public void saveFile(File file, String text) {
-        if (file != null) {
+        if (file == null) {
+            displayShortToast(application.getString(R.string.could_not_do_that));
+        } else {
             Observable<Boolean> observable = Observable.just(file.save(text));
 
             Observer<Boolean> observer = new Observer<Boolean>() {
@@ -271,8 +269,6 @@ public class NotesRepository implements Repository {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(observer);
-        } else {
-            displayShortToast(application.getString(R.string.could_not_do_that));
         }
     }
 }

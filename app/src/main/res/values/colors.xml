@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="aqua_blue">#FF86ABA5</color>
     <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="corn">#FFFAA945</color>
+    <color name="eggshell_paper">#FFE2BE9F</color>
+    <color name="golden_oak">#FFBB8141</color>
+    <color name="goryeo_storeroom">#FF203838</color>
     <color name="gray">#FF808080</color>
     <color name="new_bridge">#FF006C7F</color>
-    <color name="aqua_blue">#FF86ABA5</color>
-    <color name="corn">#FFFAA945</color>
-    <color name="golden_oak">#FFBB8141</color>
+    <color name="white">#FFFFFFFF</color>
 </resources>
