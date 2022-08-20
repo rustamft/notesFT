@@ -5,7 +5,7 @@
 
         <variable
             name="viewModel"
-            type="com.rustamft.notesft.screens.list.ListViewModel" />
+            type="com.rustamft.notesft.presentation.screen.list.ListViewModel" />
     </data>
 
     <LinearLayout

@@ -21,7 +21,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.rustamft.notesft.activities.MainActivity;
+import com.rustamft.notesft.presentation.activity.MainActivity;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
