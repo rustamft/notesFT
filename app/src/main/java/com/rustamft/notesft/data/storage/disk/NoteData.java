@@ -19,26 +19,50 @@ import java.util.Objects;
 /**
  * Represents a note file.
  */
-public class NoteData extends Note {
+public class NoteData extends Note { // TODO: sync fields with abstract class
 
-    private final Context context;
+    private final Context mContext;
     private final String mWorkingDir;
-    private String mName;
     private DocumentFile mFile;
+    private String mName;
+    private String mText = "";
 
     public NoteData(
             Context context,
             String workingDir,
             String noteName
     ) {
-        this.context = context;
-        this.mWorkingDir = workingDir;
-        this.mName = noteName;
-        this.mFile = buildDocumentFile(mName);
+        mContext = context;
+        mWorkingDir = workingDir;
+        mFile = buildDocumentFile();
+        mName = noteName;
+        if (mFile.exists()) {
+            mText = buildStringFromContent();
+        }
     }
 
-    public boolean exists() {
-        return mFile.exists();
+    public String getWorkingDir() {
+        return mWorkingDir;
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    public String getText() {
+        return mText;
+    }
+
+    public void setText(String text) {
+        mText = text;
+    }
+
+    public void setFile(DocumentFile file) {
+        mFile = file;
+    }
+
+    protected DocumentFile getFile() {
+        return mFile;
     }
 
     public String path() {
@@ -53,59 +77,21 @@ public class NoteData extends Note {
         return mFile.lastModified();
     }
 
-    public String getWorkingDir() {
-        return mWorkingDir;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    protected boolean create() {
-        try {
-            // Get a valid parent URI
-            DocumentFile parentDocument =
-                    DocumentFile.fromTreeUri(context, Uri.parse(mWorkingDir));
-            if (parentDocument == null) {
-                return false;
-            }
-            Uri parentDocumentUri = parentDocument.getUri();
-            // Create new file
-            Uri noteFileUri = DocumentsContract.createDocument(
-                    context.getContentResolver(), parentDocumentUri, "", mName
-            );
-            if (noteFileUri == null) {
-                return false;
-            }
-            mFile = DocumentFile.fromSingleUri(context, noteFileUri);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    protected boolean delete() {
-        if (mFile != null) {
-            return mFile.delete();
-        } else return false;
-    }
-
     public boolean rename(String newName) {
         // Create a virtual file with entered name
-        DocumentFile renamedFile = buildDocumentFile(newName);
+        DocumentFile renamedFile = buildDocumentFile();
 
         if (renamedFile == null) {
             return false;
         }
 
         if (!renamedFile.exists()) { // Do the rename and check it's successful
-            if (exists()) { // If old file exists
+            if (mFile.exists()) { // If old file exists
                 try {
                     Uri renamedFileUri = DocumentsContract.renameDocument(
-                            context.getContentResolver(), mFile.getUri(), newName
+                            mContext.getContentResolver(), mFile.getUri(), newName
                     );
-                    renamedFile = DocumentFile.fromSingleUri(context, renamedFileUri);
+                    renamedFile = DocumentFile.fromSingleUri(mContext, renamedFileUri);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return false;
@@ -131,7 +117,7 @@ public class NoteData extends Note {
         try {
             // Write the text to the file.
             ParcelFileDescriptor pfd =
-                    context.getContentResolver().openFileDescriptor(mFile.getUri(), "wt");
+                    mContext.getContentResolver().openFileDescriptor(mFile.getUri(), "wt");
             FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());
             fos.write(text.getBytes());
             fos.close();
@@ -147,7 +133,7 @@ public class NoteData extends Note {
         StringBuilder stringBuilder = new StringBuilder();
         try (
                 InputStream inputStream =
-                        context.getContentResolver().openInputStream(mFile.getUri());
+                        mContext.getContentResolver().openInputStream(mFile.getUri());
                 BufferedReader br = new BufferedReader(
                         new InputStreamReader(Objects.requireNonNull(inputStream))
                 )
@@ -162,14 +148,14 @@ public class NoteData extends Note {
         return stringBuilder.toString();
     }
 
-    private DocumentFile buildDocumentFile(String fileName) {
+    private DocumentFile buildDocumentFile() {
         Uri basePathUri = Uri.parse(mWorkingDir);
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-                basePathUri, DocumentsContract.getTreeDocumentId(basePathUri)
+                basePathUri,
+                DocumentsContract.getTreeDocumentId(basePathUri)
         );
-        String extPath =
-                childrenUri.toString().replace("/children", "%2F");
-        Uri fileUri = Uri.parse(extPath + fileName);
-        return DocumentFile.fromSingleUri(context, fileUri);
+        String extPath = childrenUri.toString().replace("/children", "%2F");
+        Uri fileUri = Uri.parse(extPath + mName);
+        return DocumentFile.fromSingleUri(mContext, fileUri);
     }
 }

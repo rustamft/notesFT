@@ -2,6 +2,8 @@ package com.rustamft.notesft.domain.model;
 
 public abstract class Note {
 
+    public abstract void setText(String text);
+
     /**
      * Returns a boolean indicating whether this file can be found.
      *
@@ -45,13 +47,6 @@ public abstract class Note {
      * @return a String with the name stored in the note instance.
      */
     public abstract String getName();
-
-    /**
-     * Creates a new file in the working directory.
-     *
-     * @return true if the file was created, false otherwise.
-     */
-    protected abstract boolean create();
 
     /**
      * Deletes this file.

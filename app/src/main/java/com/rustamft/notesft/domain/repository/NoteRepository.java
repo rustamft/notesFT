@@ -6,7 +6,14 @@ import com.rustamft.notesft.domain.model.Note;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+
 public interface NoteRepository {
+
+    Single<Void> saveNote(Note note);
+    Single<Void> deleteNote(Note note);
+    Single<Note> getNote(String noteName, String workingDir);
 
     /**
      * Returns a date the file was last modified.

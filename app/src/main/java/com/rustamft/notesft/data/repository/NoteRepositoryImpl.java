@@ -26,20 +26,51 @@ import java.util.List;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Observer;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class NoteRepositoryImpl implements NoteRepository {
 
-    private final Context context;
+    private final Context mContext;
     private final NoteStorage mNoteStorage;
 
     public NoteRepositoryImpl(
             Context context,
             NoteStorage noteStorage
     ) {
-        this.context = context;
+        this.mContext = context;
         this.mNoteStorage = noteStorage;
+    }
+
+    public Single<Void> saveNote(Note note) {
+        return Single.create(observer -> {
+            try {
+                observer.onSuccess(mNoteStorage.save((NoteData) note));
+            } catch (Throwable t) {
+                observer.onError(t);
+            }
+        });
+    }
+
+    public Single<Void> deleteNote(Note note) {
+        return Single.create(observer -> {
+            try {
+                observer.onSuccess(mNoteStorage.delete((NoteData) note));
+            } catch (Throwable t) {
+                observer.onError(t);
+            }
+        });
+    }
+
+    public Single<Note> getNote(String noteName, String workingDir) {
+        return Single.create(observer -> {
+            try {
+                observer.onSuccess(mNoteStorage.get(noteName, workingDir));
+            } catch (Throwable t) {
+                observer.onError(t);
+            }
+        });
     }
 
     public String lastModifiedAsString(Note note) {
@@ -52,16 +83,16 @@ public class NoteRepositoryImpl implements NoteRepository {
 
     public boolean createFile(String noteName, String workingDir) {
         NoteData note = new NoteData(
-                context,
+                mContext,
                 workingDir,
                 noteName
         );
         if (!noteName.isEmpty()) {
             if (note.exists()) {
-                displayShortToast(context.getString(R.string.same_name_note_exists));
+                displayShortToast(mContext.getString(R.string.same_name_note_exists));
                 return false;
             } else {
-                return mNoteStorage.create(note);
+                return mNoteStorage.save(note);
             }
         }
         return false;
@@ -76,7 +107,7 @@ public class NoteRepositoryImpl implements NoteRepository {
     private List<String> buildFilesList(String workingDir) {
         List<String> filesList = new ArrayList<>();
         String name, mime;
-        ContentResolver contentResolver = context.getContentResolver();
+        ContentResolver contentResolver = mContext.getContentResolver();
         Uri childrenUri = buildChildrenUri(workingDir);
         try (
                 Cursor c = contentResolver.query(
@@ -119,7 +150,7 @@ public class NoteRepositoryImpl implements NoteRepository {
      * @param message a message to be shown in the toast.
      */
     private void displayShortToast(String message) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -128,12 +159,12 @@ public class NoteRepositoryImpl implements NoteRepository {
      * @param message a message to be shown in the toast.
      */
     private void displayLongToast(String message) {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
     }
 
     /*
     /////////////////////////// Worker thread methods ///////////////////////////
-    */
+    */ // TODO: move Observer to ViewModel
 
     public void updateFilesList(String workingDir, MutableLiveData<List<String>> filesList) {
         if (workingDir != null && filesList != null) {
@@ -181,7 +212,7 @@ public class NoteRepositoryImpl implements NoteRepository {
                 @Override
                 public void onNext(@io.reactivex.rxjava3.annotations.NonNull Boolean aBoolean) {
                     if (!aBoolean) {
-                        displayShortToast(context.getString(R.string.could_not_do_that));
+                        displayShortToast(mContext.getString(R.string.could_not_do_that));
                     }
                 }
 
@@ -218,7 +249,7 @@ public class NoteRepositoryImpl implements NoteRepository {
                     if (aBoolean) {
                         actionBarTitle.postValue(newName);
                     } else {
-                        displayShortToast(context.getString(R.string.could_not_do_that));
+                        displayShortToast(mContext.getString(R.string.could_not_do_that));
                     }
                 }
 
@@ -242,7 +273,7 @@ public class NoteRepositoryImpl implements NoteRepository {
 
     public void saveFile(Note note, String text) {
         if (note == null) {
-            displayShortToast(context.getString(R.string.could_not_do_that));
+            displayShortToast(mContext.getString(R.string.could_not_do_that));
         } else {
             Observable<Boolean> observable = Observable.just(note.save(text));
 
@@ -254,7 +285,7 @@ public class NoteRepositoryImpl implements NoteRepository {
                 @Override
                 public void onNext(@io.reactivex.rxjava3.annotations.NonNull Boolean aBoolean) {
                     if (!aBoolean) {
-                        displayShortToast(context.getString(R.string.could_not_do_that));
+                        displayShortToast(mContext.getString(R.string.could_not_do_that));
                     }
                 }
 

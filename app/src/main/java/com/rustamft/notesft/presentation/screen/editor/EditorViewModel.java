@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -20,42 +21,54 @@ import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
 import com.rustamft.notesft.presentation.activity.MainActivity;
-import com.rustamft.notesft.data.storage.disk.NoteData;
 import com.rustamft.notesft.util.Constants;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @HiltViewModel
 public class EditorViewModel extends ViewModel {
 
-    private final Application application;
-    private final NoteRepository noteRepository;
-    private final MutableLiveData<String> actionBarTitle = new MutableLiveData<>();
-    private androidx.lifecycle.Observer<String> actionBarTitleObserver;
+    private final Application mApplication;
+    private final NoteRepository mNoteRepository;
+    private final CompositeDisposable mCompositeDisposable = new CompositeDisposable();
+    private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
+    private androidx.lifecycle.Observer<String> mActionBarTitleObserver;
     private Note mNote;
-    public String noteText;
 
     @Inject
     public EditorViewModel(
             Application application,
             SavedStateHandle state,
-            AppPreferencesRepository prefs,
+            AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository
     ) {
-        this.application = application;
-        this.noteRepository = noteRepository;
-        String name = state.get(Constants.NOTE_NAME);
-        actionBarTitle.setValue(name);
-        if (isNotNullNorBlank(name)) {
-            this.mNote = new NoteData(
-                    application.getApplicationContext(),
-                    prefs.getWorkingDir(),
-                    name
-            );
-            this.noteText = mNote.buildStringFromContent();
+        mApplication = application;
+        mNoteRepository = noteRepository;
+        String noteName = state.get(Constants.NOTE_NAME);
+        mActionBarTitle.setValue(noteName);
+        if (isNotNullNorBlank(noteName)) {
+            Disposable disposable = mNoteRepository.getNote(
+                    noteName,
+                    appPreferencesRepository.getWorkingDir()
+            )
+                    .observeOn(Schedulers.io())
+                    .subscribe(
+                            note -> mNote = note,
+                            throwable -> displayLongToast(throwable.getMessage())
+                    );
+            mCompositeDisposable.add(disposable);
         }
+    }
+
+    @Override
+    protected void onCleared() {
+        mCompositeDisposable.dispose();
+        super.onCleared();
     }
 
     /**
@@ -69,9 +82,14 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void onSaveFabClick(View view, EditText editText) {
-        String noteText = editText.getText().toString();
-        saveNoteText(noteText);
-        animateFade(view, 1f, 0f);
+        mNote.setText(editText.getText().toString());
+        Disposable disposable = mNoteRepository.saveNote(mNote)
+                .observeOn(Schedulers.io())
+                .subscribe(
+                        success -> animateFade(view, 1f, 0f),
+                        throwable -> displayLongToast(throwable.getMessage())
+                );
+        mCompositeDisposable.add(disposable);
     }
 
     public void onEditTextChanged(View view) {
@@ -91,7 +109,7 @@ public class EditorViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
                     // Apply button clicked
                     String newName = editText.getText().toString();
-                    noteRepository.renameFile(mNote, newName, actionBarTitle);
+                    mNoteRepository.renameFile(mNote, newName, mActionBarTitle);
                 }))
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
                     // Cancel button clicked
@@ -103,7 +121,7 @@ public class EditorViewModel extends ViewModel {
         String size = context.getString(R.string.about_note_file_size) + mNote.length() +
                 context.getString(R.string.about_note_byte);
         String lastModified = context.getString(R.string.about_note_last_modified) +
-                noteRepository.lastModifiedAsString(mNote);
+                mNoteRepository.lastModifiedAsString(mNote);
         String path = context.getString(R.string.about_note_file_path) + mNote.path();
         String message = size + "\n\n" + lastModified + "\n\n" + path;
         new AlertDialog.Builder(context)
@@ -119,8 +137,8 @@ public class EditorViewModel extends ViewModel {
      * Sets the app name to the ActionBar title.
      */
     public void resetActionBarTitle() {
-        actionBarTitle.setValue(application.getString(R.string.app_name));
-        actionBarTitle.removeObserver(actionBarTitleObserver);
+        mActionBarTitle.setValue(mApplication.getString(R.string.app_name));
+        mActionBarTitle.removeObserver(mActionBarTitleObserver);
     }
 
     boolean isNotNullNorBlank(String string) {
@@ -144,18 +162,9 @@ public class EditorViewModel extends ViewModel {
     void registerActionBarTitleObserver(MainActivity mainActivity) {
         ActionBar actionBar = mainActivity.getSupportActionBar();
         if (actionBar != null) {
-            actionBarTitleObserver = s -> actionBar.setTitle(actionBarTitle.getValue());
-            actionBarTitle.observe(mainActivity, actionBarTitleObserver);
+            mActionBarTitleObserver = s -> actionBar.setTitle(mActionBarTitle.getValue());
+            mActionBarTitle.observe(mainActivity, mActionBarTitleObserver);
         }
-    }
-
-    /**
-     * Saves the given text to the current note file.
-     *
-     * @param text a text to save to the current note.
-     */
-    void saveNoteText(String text) {
-        noteRepository.saveFile(mNote, text);
     }
 
     /**
@@ -173,9 +182,14 @@ public class EditorViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_save, (dialog, which) -> {
                     // Save button clicked
                     EditText editText = view.findViewById(R.id.edittext_note);
-                    String noteText = editText.getText().toString();
-                    saveNoteText(noteText);
-                    navigateBack(view);
+                    mNote.setText(editText.getText().toString());
+                    Disposable disposable = mNoteRepository.saveNote(mNote)
+                            .observeOn(Schedulers.io())
+                            .subscribe(
+                                    success -> navigateBack(view),
+                                    throwable -> displayLongToast(throwable.getMessage())
+                            );
+                    mCompositeDisposable.add(disposable);
                 })
                 .setNegativeButton(R.string.action_cancel, (dialog, which) -> {
                     // Cancel button clicked
@@ -197,5 +211,9 @@ public class EditorViewModel extends ViewModel {
         view.startAnimation(fadeAnimation);
         // If fading out, hide the view after animation is ended.
         if (!fadeIn) view.postDelayed(() -> view.setVisibility(View.GONE), 500);
+    }
+
+    private void displayLongToast(String message) {
+        Toast.makeText(mApplication, message, Toast.LENGTH_LONG).show();
     }
 }

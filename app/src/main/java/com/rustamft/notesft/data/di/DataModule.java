@@ -40,8 +40,8 @@ class DataModule {
 
     @Provides
     @Singleton
-    NoteStorage provideNoteStorage() {
-        return new DiskNoteStorage();
+    NoteStorage provideNoteStorage(@ApplicationContext Context context) {
+        return new DiskNoteStorage(context);
     }
 
     @Provides
