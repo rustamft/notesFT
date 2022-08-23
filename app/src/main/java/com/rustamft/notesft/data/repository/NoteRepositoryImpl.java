@@ -43,34 +43,16 @@ public class NoteRepositoryImpl implements NoteRepository {
         this.mNoteStorage = noteStorage;
     }
 
-    public Single<Void> saveNote(Note note) {
-        return Single.create(observer -> {
-            try {
-                observer.onSuccess(mNoteStorage.save((NoteData) note));
-            } catch (Throwable t) {
-                observer.onError(t);
-            }
-        });
+    public Single<Boolean> saveNote(Note note) {
+        return Single.fromCallable(() -> mNoteStorage.save((NoteData) note));
     }
 
-    public Single<Void> deleteNote(Note note) {
-        return Single.create(observer -> {
-            try {
-                observer.onSuccess(mNoteStorage.delete((NoteData) note));
-            } catch (Throwable t) {
-                observer.onError(t);
-            }
-        });
+    public Single<Boolean> deleteNote(Note note) {
+        return Single.fromCallable(() -> mNoteStorage.delete((NoteData) note));
     }
 
     public Single<Note> getNote(String noteName, String workingDir) {
-        return Single.create(observer -> {
-            try {
-                observer.onSuccess(mNoteStorage.get(noteName, workingDir));
-            } catch (Throwable t) {
-                observer.onError(t);
-            }
-        });
+        return Single.fromCallable(() -> mNoteStorage.get(noteName, workingDir));
     }
 
     public String lastModifiedAsString(Note note) {

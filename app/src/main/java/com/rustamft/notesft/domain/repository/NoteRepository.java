@@ -11,8 +11,8 @@ import io.reactivex.rxjava3.core.Single;
 
 public interface NoteRepository {
 
-    Single<Void> saveNote(Note note);
-    Single<Void> deleteNote(Note note);
+    Single<Boolean> saveNote(Note note);
+    Single<Boolean> deleteNote(Note note);
     Single<Note> getNote(String noteName, String workingDir);
 
     /**

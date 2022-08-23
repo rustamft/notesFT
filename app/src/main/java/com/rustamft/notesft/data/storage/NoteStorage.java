@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public interface NoteStorage {
 ;
-    Void save(NoteData note) throws IOException;
-    Void delete(NoteData note) throws IOException;
+    Boolean save(NoteData note) throws IOException;
+    Boolean delete(NoteData note) throws IOException;
     NoteData get(String noteName, String workingDir) throws NullPointerException;
 }

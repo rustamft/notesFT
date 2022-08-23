@@ -12,9 +12,6 @@ import com.rustamft.notesft.data.storage.NoteStorage;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observable;
-
 public class DiskNoteStorage implements NoteStorage {
 
     private final Context mContext;
@@ -24,24 +21,24 @@ public class DiskNoteStorage implements NoteStorage {
     }
 
     @Override
-    public Void save(NoteData note) throws IOException {
+    public Boolean save(NoteData note) throws IOException {
         if (note.getFile().exists()) {
             updateExisting(note);
         } else {
             createNew(note);
         }
-        return null;
+        return true;
     }
 
     @Override
-    public Void delete(NoteData note) throws IOException {
+    public Boolean delete(NoteData note) throws IOException {
         DocumentFile file = note.getFile();
         if (file != null) {
             file.delete();
         } else {
             throw new IOException("File is null");
         }
-        return null;
+        return true;
     }
 
     @Override
@@ -51,33 +48,6 @@ public class DiskNoteStorage implements NoteStorage {
                 workingDir,
                 noteName
         );
-    }
-
-    private Void tryDelete(NoteData note) {
-        try {
-            DocumentFile file = note.getFile();
-            if (file != null) {
-                file.delete();
-            } else {
-                throw new IOException("File is null");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private @NonNull NoteData tryGet(String noteName, String workingDir) {
-        try {
-            return new NoteData(
-                    mContext,
-                    workingDir,
-                    noteName
-            );
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-        return new NoteData(null, null, null);
     }
 
     private void updateExisting(NoteData note) throws IOException {

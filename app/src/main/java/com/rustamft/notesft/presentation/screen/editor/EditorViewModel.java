@@ -26,6 +26,7 @@ import com.rustamft.notesft.util.Constants;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -33,41 +34,40 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @HiltViewModel
 public class EditorViewModel extends ViewModel {
 
-    private final Application mApplication;
+    private final Application mContext;
     private final NoteRepository mNoteRepository;
-    private final CompositeDisposable mCompositeDisposable = new CompositeDisposable();
+    private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
     private androidx.lifecycle.Observer<String> mActionBarTitleObserver;
-    private Note mNote;
+    public Note mNote; // TODO: make not exposed
 
     @Inject
     public EditorViewModel(
-            Application application,
+            @ApplicationContext Application context,
             SavedStateHandle state,
             AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository
     ) {
-        mApplication = application;
+        mContext = context;
         mNoteRepository = noteRepository;
         String noteName = state.get(Constants.NOTE_NAME);
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
-            Disposable disposable = mNoteRepository.getNote(
-                    noteName,
-                    appPreferencesRepository.getWorkingDir()
-            )
-                    .observeOn(Schedulers.io())
-                    .subscribe(
+            mDisposables.add(
+                    mNoteRepository.getNote(
+                            noteName,
+                            appPreferencesRepository.getWorkingDir()
+                    ).subscribe(
                             note -> mNote = note,
-                            throwable -> displayLongToast(throwable.getMessage())
-                    );
-            mCompositeDisposable.add(disposable);
+                            error -> displayLongToast(error.getMessage())
+                    )
+            );
         }
     }
 
     @Override
     protected void onCleared() {
-        mCompositeDisposable.dispose();
+        mDisposables.clear();
         super.onCleared();
     }
 
@@ -83,13 +83,12 @@ public class EditorViewModel extends ViewModel {
 
     public void onSaveFabClick(View view, EditText editText) {
         mNote.setText(editText.getText().toString());
-        Disposable disposable = mNoteRepository.saveNote(mNote)
-                .observeOn(Schedulers.io())
-                .subscribe(
+        mDisposables.add(
+                mNoteRepository.saveNote(mNote).subscribe(
                         success -> animateFade(view, 1f, 0f),
-                        throwable -> displayLongToast(throwable.getMessage())
-                );
-        mCompositeDisposable.add(disposable);
+                        error -> displayLongToast(error.getMessage())
+                )
+        );
     }
 
     public void onEditTextChanged(View view) {
@@ -137,7 +136,7 @@ public class EditorViewModel extends ViewModel {
      * Sets the app name to the ActionBar title.
      */
     public void resetActionBarTitle() {
-        mActionBarTitle.setValue(mApplication.getString(R.string.app_name));
+        mActionBarTitle.setValue(mContext.getString(R.string.app_name));
         mActionBarTitle.removeObserver(mActionBarTitleObserver);
     }
 
@@ -189,7 +188,7 @@ public class EditorViewModel extends ViewModel {
                                     success -> navigateBack(view),
                                     throwable -> displayLongToast(throwable.getMessage())
                             );
-                    mCompositeDisposable.add(disposable);
+                    mDisposables.add(disposable);
                 })
                 .setNegativeButton(R.string.action_cancel, (dialog, which) -> {
                     // Cancel button clicked
@@ -214,6 +213,6 @@ public class EditorViewModel extends ViewModel {
     }
 
     private void displayLongToast(String message) {
-        Toast.makeText(mApplication, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
     }
 }

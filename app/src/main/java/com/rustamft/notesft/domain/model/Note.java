@@ -4,6 +4,8 @@ public abstract class Note {
 
     public abstract void setText(String text);
 
+    public abstract String getText();
+
     /**
      * Returns a boolean indicating whether this file can be found.
      *
