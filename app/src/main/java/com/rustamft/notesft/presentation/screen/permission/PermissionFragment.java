@@ -17,7 +17,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.FragmentPermissionBinding;
-import com.rustamft.notesft.util.BetterActivityResult;
+import com.rustamft.notesft.domain.util.BetterActivityResult;
 
 import dagger.hilt.android.AndroidEntryPoint;
 

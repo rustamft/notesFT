@@ -1,8 +1,8 @@
-package com.rustamft.notesft.data.model;
+package com.rustamft.notesft.data.storage.sharedpreferences;
 
 import com.rustamft.notesft.domain.model.AppPreferences;
 
-public class AppPreferencesData extends AppPreferences {
+public class AppPreferencesData extends AppPreferences { // TODO: use this
 
     public final int nightMode;
     public final String workingDir;

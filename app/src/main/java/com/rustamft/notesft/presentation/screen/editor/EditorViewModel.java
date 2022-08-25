@@ -20,22 +20,23 @@ import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
+import com.rustamft.notesft.domain.util.Constants;
+import com.rustamft.notesft.domain.util.DateTimeStringBuilder;
+import com.rustamft.notesft.domain.util.ToastDisplay;
 import com.rustamft.notesft.presentation.activity.MainActivity;
-import com.rustamft.notesft.util.Constants;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @HiltViewModel
 public class EditorViewModel extends ViewModel {
 
     private final Application mContext;
     private final NoteRepository mNoteRepository;
+    private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
     private androidx.lifecycle.Observer<String> mActionBarTitleObserver;
@@ -46,10 +47,12 @@ public class EditorViewModel extends ViewModel {
             @ApplicationContext Application context,
             SavedStateHandle state,
             AppPreferencesRepository appPreferencesRepository,
-            NoteRepository noteRepository
+            NoteRepository noteRepository,
+            ToastDisplay toastDisplay
     ) {
         mContext = context;
         mNoteRepository = noteRepository;
+        mToastDisplay = toastDisplay;
         String noteName = state.get(Constants.NOTE_NAME);
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
@@ -81,11 +84,11 @@ public class EditorViewModel extends ViewModel {
         } else navigateBack(view);
     }
 
-    public void onSaveFabClick(View view, EditText editText) {
+    public void onNoteSave(View view, EditText editText) {
         mNote.setText(editText.getText().toString());
         mDisposables.add(
                 mNoteRepository.saveNote(mNote).subscribe(
-                        success -> animateFade(view, 1f, 0f),
+                        success -> navigateBack(view),
                         error -> displayLongToast(error.getMessage())
                 )
         );
@@ -93,7 +96,7 @@ public class EditorViewModel extends ViewModel {
 
     public void onEditTextChanged(View view) {
         if (view.getVisibility() != View.VISIBLE) {
-            animateFade(view, 0f, 1f);
+            animateFadeIn(view);
         }
     }
 
@@ -103,25 +106,34 @@ public class EditorViewModel extends ViewModel {
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
         editText.setText(mNote.getName());
         new AlertDialog.Builder(context)
-                .setTitle(R.string.rename_note)
+                .setTitle(R.string.note_rename)
                 .setView(dialogView)
-                .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
-                    // Apply button clicked
-                    String newName = editText.getText().toString();
-                    mNoteRepository.renameFile(mNote, newName, mActionBarTitle);
-                }))
-                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
-                    // Cancel button clicked
-                }))
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
+                        mNoteRepository.renameNote(
+                                mNote,
+                                editText.getText().toString()
+                        ).subscribe(
+                                note -> {
+                                    if (mNote == note) {
+                                        mToastDisplay.showShort(R.string.something_went_wrong);
+                                    } else {
+                                        mNote = note;
+                                        mActionBarTitle.postValue(note.getName());
+                                    }
+                                },
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
+                )))
+                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> { /* Cancel */ }))
                 .show();
     }
 
     public void displayAboutNote(Context context) {
-        String size = context.getString(R.string.about_note_file_size) + mNote.length() +
+        String size = context.getString(R.string.about_note_file_size) + mNote.getSize() +
                 context.getString(R.string.about_note_byte);
         String lastModified = context.getString(R.string.about_note_last_modified) +
-                mNoteRepository.lastModifiedAsString(mNote);
-        String path = context.getString(R.string.about_note_file_path) + mNote.path();
+                DateTimeStringBuilder.millisToString(mNote.getLastModified());
+        String path = context.getString(R.string.about_note_file_path) + mNote.getPath();
         String message = size + "\n\n" + lastModified + "\n\n" + path;
         new AlertDialog.Builder(context)
                 .setTitle(R.string.about_note)
@@ -181,14 +193,7 @@ public class EditorViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_save, (dialog, which) -> {
                     // Save button clicked
                     EditText editText = view.findViewById(R.id.edittext_note);
-                    mNote.setText(editText.getText().toString());
-                    Disposable disposable = mNoteRepository.saveNote(mNote)
-                            .observeOn(Schedulers.io())
-                            .subscribe(
-                                    success -> navigateBack(view),
-                                    throwable -> displayLongToast(throwable.getMessage())
-                            );
-                    mDisposables.add(disposable);
+                    onNoteSave(view, editText);
                 })
                 .setNegativeButton(R.string.action_cancel, (dialog, which) -> {
                     // Cancel button clicked
@@ -200,12 +205,12 @@ public class EditorViewModel extends ViewModel {
                 .show();
     }
 
-    private void animateFade(View view, float from, float to) {
+    private void animateFadeIn(View view) {
         boolean fadeIn = view.getVisibility() != View.VISIBLE;
         if (fadeIn) {
             view.setVisibility(View.VISIBLE);
         }
-        AlphaAnimation fadeAnimation = new AlphaAnimation(from, to);
+        AlphaAnimation fadeAnimation = new AlphaAnimation((float) 0.0, (float) 1.0);
         fadeAnimation.setDuration(500);
         view.startAnimation(fadeAnimation);
         // If fading out, hide the view after animation is ended.

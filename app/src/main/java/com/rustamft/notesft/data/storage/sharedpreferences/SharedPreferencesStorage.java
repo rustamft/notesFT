@@ -5,9 +5,8 @@ import static android.content.Context.MODE_PRIVATE;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.rustamft.notesft.data.model.AppPreferencesData;
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
-import com.rustamft.notesft.util.Constants;
+import com.rustamft.notesft.domain.util.Constants;
 
 public class SharedPreferencesStorage implements AppPreferencesStorage {
 

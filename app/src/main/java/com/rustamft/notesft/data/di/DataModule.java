@@ -46,10 +46,7 @@ class DataModule {
 
     @Provides
     @Singleton
-    NoteRepository provideNotesRepository(
-            @ApplicationContext Context context,
-            NoteStorage noteStorage
-    ) {
-        return new NoteRepositoryImpl(context, noteStorage);
+    NoteRepository provideNotesRepository(NoteStorage noteStorage) {
+        return new NoteRepositoryImpl(noteStorage);
     }
 }

@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.content.UriPermission;
 import android.net.Uri;
 
-import com.rustamft.notesft.data.model.AppPreferencesData;
+import com.rustamft.notesft.data.storage.sharedpreferences.AppPreferencesData;
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 
@@ -26,7 +26,7 @@ public class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
         this.mAppPreferences = appPreferencesStorage.get();
     }
 
-    public boolean hasPermission() { // TODO: move to App class probably
+    public boolean hasWorkingDirPermission() { // TODO: move to App class probably
         // Get working dir
         String workingDir = getWorkingDir();
         // Check if there is saved workingDir in shared preferences

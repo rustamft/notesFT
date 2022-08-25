@@ -9,7 +9,7 @@ public interface AppPreferencesRepository {
      *
      * @return true if the permission is granted, false otherwise.
      */
-    boolean hasPermission();
+    boolean hasWorkingDirPermission();
 
     /**
      * Sets a remembered state of the night mode for the app.
@@ -33,9 +33,9 @@ public interface AppPreferencesRepository {
     void setWorkingDir(Intent resultData);
 
     /**
-     * Gets a working directory path stored in SharedPreferences.
+     * Gets a working directory getPath stored in SharedPreferences.
      *
-     * @return a String with the working directory path or null if there's none stored.
+     * @return a String with the working directory getPath or null if there's none stored.
      */
     String getWorkingDir();
 }

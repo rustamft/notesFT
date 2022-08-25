@@ -25,7 +25,7 @@ public class PermissionViewModel extends ViewModel {
      * @return true if the permission is granted, otherwise - false.
      */
     boolean hasPermission() {
-        return prefs.hasPermission();
+        return prefs.hasWorkingDirPermission();
     }
 
     /**

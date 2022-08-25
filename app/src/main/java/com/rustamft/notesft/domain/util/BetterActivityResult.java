@@ -1,4 +1,4 @@
-package com.rustamft.notesft.util;
+package com.rustamft.notesft.domain.util;
 
 import android.content.Intent;
 import androidx.activity.result.ActivityResult;

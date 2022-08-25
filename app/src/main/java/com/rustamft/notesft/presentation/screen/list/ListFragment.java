@@ -16,21 +16,21 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.rustamft.notesft.R;
-import com.rustamft.notesft.presentation.activity.MainActivity;
 import com.rustamft.notesft.databinding.FragmentListBinding;
+import com.rustamft.notesft.presentation.activity.MainActivity;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class ListFragment extends Fragment {
 
-    private ListViewModel viewModel;
-    private FragmentListBinding binding;
+    private ListViewModel mViewModel;
+    private FragmentListBinding mBinding;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(ListViewModel.class);
+        mViewModel = new ViewModelProvider(this).get(ListViewModel.class);
         setHasOptionsMenu(true); // To make onCreateOptionsMenu work
     }
 
@@ -45,8 +45,8 @@ public class ListFragment extends Fragment {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(false);
         }
-        binding = FragmentListBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        mBinding = FragmentListBinding.inflate(inflater, container, false);
+        return mBinding.getRoot();
     }
 
     @Override
@@ -57,22 +57,22 @@ public class ListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (viewModel.hasPermission()) {
-            viewModel.updateNotesList();
+        if (mViewModel.hasWorkingDirPermission()) {
+            mViewModel.updateNoteNameList();
         } else {
-            viewModel.navigateBack(requireView());
+            mViewModel.navigateBack(requireView());
         }
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        binding.setViewModel(viewModel);
-        binding.setAdapter(
-                new NotesListAdapter(this, viewModel)
+        mBinding.setViewModel(mViewModel);
+        mBinding.setAdapter(
+                new NotesListAdapter(this, mViewModel)
         );
-        AppCompatDelegate.setDefaultNightMode(viewModel.getNightMode());
-        registerForContextMenu(binding.recyclerviewList);
+        AppCompatDelegate.setDefaultNightMode(mViewModel.getNightMode());
+        registerForContextMenu(mBinding.recyclerviewList);
     }
 
     @Override
@@ -85,17 +85,17 @@ public class ListFragment extends Fragment {
         switch (item.getItemId()) {
             case ACTION_REFRESH_ID:
                 View refreshAction = requireActivity().findViewById(R.id.action_refresh);
-                viewModel.animateRotation(refreshAction);
-                viewModel.updateNotesList();
+                mViewModel.animateRotation(refreshAction);
+                mViewModel.updateNoteNameList();
                 return true;
             case ACTION_CHOOSE_DIR_ID:
-                viewModel.promptNavigateBack(requireView());
+                mViewModel.promptNavigateBack(requireView());
                 return true;
             case ACTION_SWITCH_DARK_ID:
-                viewModel.switchNightMode();
+                mViewModel.switchNightMode();
                 return true;
             case ACTION_ABOUT_APP_ID:
-                viewModel.displayAboutApp(requireContext());
+                mViewModel.displayAboutApp(requireContext());
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -104,9 +104,8 @@ public class ListFragment extends Fragment {
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == 0) {
-            int position = item.getGroupId();
-            String noteName = viewModel.getNoteNameAtPosition(position);
-            viewModel.promptDeletion(requireContext(), noteName);
+            int noteIndex = item.getGroupId();
+            mViewModel.promptDeletion(requireContext(), noteIndex);
             return true;
         }
         return super.onContextItemSelected(item);
@@ -115,6 +114,6 @@ public class ListFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        mBinding = null;
     }
 }

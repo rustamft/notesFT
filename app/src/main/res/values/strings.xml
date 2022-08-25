@@ -26,13 +26,14 @@
     <string name="are_you_sure_change_dir">Are you sure you wish to change working directory?</string>
     <string name="are_you_sure_delete">Are you sure you wish to delete</string>
     <string name="choose_directory">Choose directory</string>
-    <string name="could_not_do_that">Could not do that</string>
-    <string name="enter_note_name">Enter note name</string>
-    <string name="new_note">New note</string>
+    <string name="note_deleted">Note has been deleted</string>
+    <string name="note_enter_name">Enter note name</string>
+    <string name="note_new">New note</string>
+    <string name="note_rename">Rename note</string>
+    <string name="note_same_name_exists">The same name note already exists!</string>
     <string name="please_confirm">Please confirm</string>
-    <string name="rename_note">Rename note</string>
-    <string name="same_name_note_exists">The same name note already exists!</string>
     <string name="sample_text" translatable="false">Sample text</string>
+    <string name="something_went_wrong">Something went wrong</string>
     <string name="switch_night_mode">Switch to dark theme</string>
     <string name="unsaved_changes">Unsaved changes</string>
     <string name="what_to_do">What would you like to do?</string>

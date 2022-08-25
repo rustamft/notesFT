@@ -20,19 +20,19 @@ import java.util.Objects;
 
 public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewHolder> {
 
-    private final ListViewModel viewModel;
-    private final LiveData<List<String>> notesList; // Cached copy of notes list
+    private final ListViewModel mViewModel;
+    private final LiveData<List<String>> mNoteNameList; // Cached copy of notes list
 
     NotesListAdapter(
             Fragment owner,
             ListViewModel viewModel
     ) {
         super(new DiffCallback());
-        this.viewModel = viewModel;
-        this.notesList = viewModel.getNotesList();
-        this.notesList.observe(
+        mViewModel = viewModel;
+        mNoteNameList = viewModel.getNoteNameList();
+        mNoteNameList.observe(
                 owner.getViewLifecycleOwner(),
-                o -> submitList(this.notesList.getValue())
+                o -> submitList(mNoteNameList.getValue())
         );
     }
 
@@ -44,7 +44,7 @@ public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewH
                 parent,
                 false
         );
-        binding.setViewModel(viewModel);
+        binding.setViewModel(mViewModel);
         return new ViewHolder(binding);
     }
 
@@ -56,15 +56,15 @@ public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewH
 
     @Override
     public int getItemCount() {
-        if (notesList.getValue() == null) {
+        if (mNoteNameList.getValue() == null) {
             return 0;
         } else {
-            return notesList.getValue().size();
+            return mNoteNameList.getValue().size();
         }
     }
 
     String getNoteAtPosition(int position) {
-        return Objects.requireNonNull(notesList.getValue()).get(position);
+        return Objects.requireNonNull(mNoteNameList.getValue()).get(position);
     }
 
 

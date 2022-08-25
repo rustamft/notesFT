@@ -21,11 +21,11 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
-import com.rustamft.notesft.domain.model.Note;
-import com.rustamft.notesft.data.storage.disk.NoteData;
-import com.rustamft.notesft.util.Constants;
+import com.rustamft.notesft.domain.util.Constants;
+import com.rustamft.notesft.domain.util.ToastDisplay;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,25 +33,37 @@ import java.util.Objects;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import dagger.hilt.android.qualifiers.ApplicationContext;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
 public class ListViewModel extends ViewModel {
 
-    private final Application application;
-    private final AppPreferencesRepository appPreferencesRepository;
-    private final NoteRepository noteRepository;
-    private final MutableLiveData<List<String>> notesList = new MutableLiveData<>();
-    private String appVersion = "Not available";
+    private final Application mContext;
+    private final AppPreferencesRepository mAppPreferencesRepository;
+    private final NoteRepository mNoteRepository;
+    private final ToastDisplay mToastDisplay;
+    private final CompositeDisposable mDisposables = new CompositeDisposable();
+    private final MutableLiveData<List<String>> mNoteNameList = new MutableLiveData<>();
+    private String mAppVersion = Constants.NOT_AVAILABLE;
 
     @Inject
     ListViewModel(
-            Application application,
+            @ApplicationContext Application context,
             AppPreferencesRepository appPreferencesRepository,
-            NoteRepository noteRepository
+            NoteRepository noteRepository,
+            ToastDisplay toastDisplay
     ) {
-        this.application = application;
-        this.appPreferencesRepository = appPreferencesRepository;
-        this.noteRepository = noteRepository;
+        mContext = context;
+        mAppPreferencesRepository = appPreferencesRepository;
+        mNoteRepository = noteRepository;
+        mToastDisplay = toastDisplay;
+    }
+
+    @Override
+    protected void onCleared() {
+        mDisposables.clear();
+        super.onCleared();
     }
 
     public void navigateNext(View view, String noteName) {
@@ -71,17 +83,24 @@ public class ListViewModel extends ViewModel {
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
         new AlertDialog.Builder(context)
-                .setTitle(R.string.new_note)
+                .setTitle(R.string.note_new)
                 .setView(dialogView)
-                .setPositiveButton(R.string.action_apply, ((dialog, which) -> {
-                    String name = editText.getText().toString();
-                    if (createNote(name)) {
-                        navigateNext(view, name);
-                    }
-                }))
-                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> {
-                    // Cancel.
-                }))
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
+                        mNoteRepository.getNote(
+                                editText.getText().toString(),
+                                mAppPreferencesRepository.getWorkingDir()
+                        ).subscribe(
+                                note -> {
+                                    if (note.getExists()) {
+                                        mToastDisplay.showShort(R.string.note_same_name_exists);
+                                    } else {
+                                        createNote(view, note);
+                                    }
+                                },
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
+                )))
+                .setNegativeButton(R.string.action_cancel, ((dialog, which) -> { /* Cancel */ }))
                 .show();
     }
 
@@ -89,62 +108,51 @@ public class ListViewModel extends ViewModel {
         new AlertDialog.Builder(view.getContext())
                 .setTitle(R.string.please_confirm)
                 .setMessage(R.string.are_you_sure_change_dir)
-                .setPositiveButton(R.string.action_yes, (dialog, which) -> navigateBackStraightToChoosing(view))
-                .setNegativeButton(R.string.action_no, (dialog, which) -> {
-                    // Cancel.
-                })
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> navigateBackToWorkingDirChoosing(view))
+                .setNegativeButton(R.string.action_no, (dialog, which) -> { /* Cancel */ })
                 .show();
     }
 
-    public void promptDeletion(Context context, String noteName) {
+    public void promptDeletion(Context context, int noteIndex) {
+        String noteName = Objects.requireNonNull(mNoteNameList.getValue()).get(noteIndex);
         String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
         new AlertDialog.Builder(context)
                 .setTitle(R.string.please_confirm)
                 .setMessage(message)
-                .setPositiveButton(R.string.action_yes, (dialog, which) -> deleteNote(noteName))
-                .setNegativeButton(R.string.action_no, (dialog, which) -> {
-                    // Cancel.
-                })
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> mDisposables.add(
+                        mNoteRepository.getNote(
+                                noteName,
+                                mAppPreferencesRepository.getWorkingDir()
+                        ).subscribe(
+                                this::deleteNote,
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
+                ))
+                .setNegativeButton(R.string.action_no, (dialog, which) -> { /* Cancel */ })
                 .show();
     }
 
-    /**
-     * Checks if the app has the files read/write permission.
-     *
-     * @return true if the permission is granted, false otherwise.
-     */
-    boolean hasPermission() {
-        return appPreferencesRepository.hasPermission();
+    boolean hasWorkingDirPermission() {
+        return mAppPreferencesRepository.hasWorkingDirPermission();
     }
 
-    /**
-     * Getter for LiveData of note files array.
-     *
-     * @return the MutableLiveData stored in the ViewModel.
-     */
-    MutableLiveData<List<String>> getNotesList() {
-        return notesList;
+    MutableLiveData<List<String>> getNoteNameList() {
+        return mNoteNameList;
     }
 
-    /**
-     * Reads the working directory contents and builds an updated note files list.
-     */
-    void updateNotesList() {
-        noteRepository.updateFilesList(appPreferencesRepository.getWorkingDir(), notesList);
+    void updateNoteNameList() {
+        mDisposables.add(
+                mNoteRepository.getNoteNameList(
+                        mAppPreferencesRepository.getWorkingDir()
+                ).subscribe(
+                        mNoteNameList::postValue,
+                        error -> mToastDisplay.showLong(error.getMessage())
+                )
+        );
     }
 
     int getNightMode() {
-        return appPreferencesRepository.getNightMode();
-    }
-
-    /**
-     * Getter for a note name at the given position.
-     *
-     * @param position a position in the notes list.
-     * @return a String with the note name.
-     */
-    String getNoteNameAtPosition(int position) {
-        return Objects.requireNonNull(notesList.getValue()).get(position);
+        return mAppPreferencesRepository.getNightMode();
     }
 
     void switchNightMode() {
@@ -155,7 +163,7 @@ public class ListViewModel extends ViewModel {
             nightMode = AppCompatDelegate.MODE_NIGHT_NO;
         }
         AppCompatDelegate.setDefaultNightMode(nightMode);
-        appPreferencesRepository.setNightMode(nightMode);
+        mAppPreferencesRepository.setNightMode(nightMode);
     }
 
     void displayAboutApp(Context context) {
@@ -183,51 +191,45 @@ public class ListViewModel extends ViewModel {
         view.startAnimation(rotate);
     }
 
-    /**
-     * Creates a note file with the given name.
-     *
-     * @param noteName a name of a note to be created.
-     * @return true if the file has been created successfully, otherwise - false.
-     */
-    private boolean createNote(String noteName) {
-        return noteRepository.createFile(
-                noteName,
-                appPreferencesRepository.getWorkingDir()
-        );
-    }
-
-    /**
-     * Deletes a note file with the given name.
-     *
-     * @param noteName a name of a note to be deleted.
-     */
-    private void deleteNote(String noteName) {
-        Note note = new NoteData(
-                application.getApplicationContext(),
-                appPreferencesRepository.getWorkingDir(),
-                noteName
-        );
-        noteRepository.deleteFile(note, notesList);
-    }
-
-    private void navigateBackStraightToChoosing(View view) {
+    private void navigateBackToWorkingDirChoosing(View view) {
         NavController navController = Navigation.findNavController(view);
         Bundle bundle = new Bundle();
         navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
     }
 
-    private String getAppVersion() {
-        if (appVersion.equals("Not available")) {
+    private void createNote(View view, Note note) {
+        mDisposables.add(
+                mNoteRepository.saveNote(note).subscribe(
+                        success -> navigateNext(view, note.getName()),
+                        error -> mToastDisplay.showLong(error.getMessage())
+                )
+        );
+    }
+
+    private void deleteNote(Note note) {
+        mDisposables.add(
+                mNoteRepository.deleteNote(note).subscribe(
+                        success -> {
+                            updateNoteNameList();
+                            mToastDisplay.showShort(R.string.note_deleted);
+                        },
+                        error -> mToastDisplay.showLong(error.getMessage())
+                )
+        );
+    }
+
+    private String getAppVersion() { // TODO: implement through Build class
+        if (mAppVersion.equals(Constants.NOT_AVAILABLE)) {
             try {
-                Context context = application.getApplicationContext();
+                Context context = mContext.getApplicationContext();
                 PackageInfo packageInfo =
                         context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-                appVersion = packageInfo.versionName;
+                mAppVersion = packageInfo.versionName;
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }
         }
-        return appVersion;
+        return mAppVersion;
     }
 
     private void openGitHub(Context context) {
