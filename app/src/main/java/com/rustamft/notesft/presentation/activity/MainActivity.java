@@ -16,4 +16,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+
+    @Override
+    public void onBackPressed() { // To fix Activity leak
+        if (getOnBackPressedDispatcher().hasEnabledCallbacks()) {
+            super.onBackPressed();
+        } else {
+            finishAfterTransition();
+        }
+    }
 }

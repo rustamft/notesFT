@@ -5,6 +5,7 @@ import android.content.Intent;
 import androidx.lifecycle.ViewModel;
 
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
+import com.rustamft.notesft.domain.util.PermissionChecker;
 
 import javax.inject.Inject;
 
@@ -12,28 +13,26 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class PermissionViewModel extends ViewModel {
-    private final AppPreferencesRepository prefs;
+
+    private final AppPreferencesRepository mAppPreferencesRepository;
+    private final PermissionChecker mPermissionChecker;
 
     @Inject
-    PermissionViewModel(AppPreferencesRepository prefs) {
-        this.prefs = prefs;
+    PermissionViewModel(
+            AppPreferencesRepository appPreferencesRepository,
+            PermissionChecker permissionChecker
+    ) {
+        mAppPreferencesRepository = appPreferencesRepository;
+        mPermissionChecker = permissionChecker;
     }
 
-    /**
-     * Checks if the app has the files read/write permission.
-     *
-     * @return true if the permission is granted, otherwise - false.
-     */
-    boolean hasPermission() {
-        return prefs.hasWorkingDirPermission();
+    boolean hasWorkingDirPermission() {
+        return mPermissionChecker.hasWorkingDirPermission(
+                mAppPreferencesRepository.getAppPreferences().workingDir
+        );
     }
 
-    /**
-     * Sets the working directory for the app.
-     *
-     * @param resultData a data result from a folder chooser intent.
-     */
     void setWorkingDir(Intent resultData) {
-        prefs.setWorkingDir(resultData);
+        mAppPreferencesRepository.setWorkingDir(resultData);
     }
 }

@@ -1,11 +1,9 @@
 package com.rustamft.notesft.presentation.screen.editor;
 
-import android.app.Application;
 import android.content.Context;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -28,13 +26,11 @@ import com.rustamft.notesft.presentation.activity.MainActivity;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
-import dagger.hilt.android.qualifiers.ApplicationContext;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
 public class EditorViewModel extends ViewModel {
 
-    private final Application mContext;
     private final NoteRepository mNoteRepository;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
@@ -44,13 +40,11 @@ public class EditorViewModel extends ViewModel {
 
     @Inject
     public EditorViewModel(
-            @ApplicationContext Application context,
             SavedStateHandle state,
             AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository,
             ToastDisplay toastDisplay
     ) {
-        mContext = context;
         mNoteRepository = noteRepository;
         mToastDisplay = toastDisplay;
         String noteName = state.get(Constants.NOTE_NAME);
@@ -59,10 +53,10 @@ public class EditorViewModel extends ViewModel {
             mDisposables.add(
                     mNoteRepository.getNote(
                             noteName,
-                            appPreferencesRepository.getWorkingDir()
+                            appPreferencesRepository.getAppPreferences().workingDir
                     ).subscribe(
                             note -> mNote = note,
-                            error -> displayLongToast(error.getMessage())
+                            error -> mToastDisplay.showLong(error.getMessage())
                     )
             );
         }
@@ -85,11 +79,11 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void onNoteSave(View view, EditText editText) {
-        mNote.setText(editText.getText().toString());
+        mNote.text = editText.getText().toString();
         mDisposables.add(
                 mNoteRepository.saveNote(mNote).subscribe(
                         success -> navigateBack(view),
-                        error -> displayLongToast(error.getMessage())
+                        error -> mToastDisplay.showLong(error.getMessage())
                 )
         );
     }
@@ -104,7 +98,7 @@ public class EditorViewModel extends ViewModel {
         final Context context = view.getContext();
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
-        editText.setText(mNote.getName());
+        editText.setText(mNote.name);
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_rename)
                 .setView(dialogView)
@@ -114,12 +108,8 @@ public class EditorViewModel extends ViewModel {
                                 editText.getText().toString()
                         ).subscribe(
                                 note -> {
-                                    if (mNote == note) {
-                                        mToastDisplay.showShort(R.string.something_went_wrong);
-                                    } else {
-                                        mNote = note;
-                                        mActionBarTitle.postValue(note.getName());
-                                    }
+                                    mNote = note;
+                                    mActionBarTitle.postValue(note.name);
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
@@ -129,11 +119,11 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void displayAboutNote(Context context) {
-        String size = context.getString(R.string.about_note_file_size) + mNote.getSize() +
+        String size = context.getString(R.string.about_note_file_size) + mNote.length() +
                 context.getString(R.string.about_note_byte);
         String lastModified = context.getString(R.string.about_note_last_modified) +
-                DateTimeStringBuilder.millisToString(mNote.getLastModified());
-        String path = context.getString(R.string.about_note_file_path) + mNote.getPath();
+                DateTimeStringBuilder.millisToString(mNote.lastModified());
+        String path = context.getString(R.string.about_note_file_path) + mNote.path();
         String message = size + "\n\n" + lastModified + "\n\n" + path;
         new AlertDialog.Builder(context)
                 .setTitle(R.string.about_note)
@@ -147,8 +137,8 @@ public class EditorViewModel extends ViewModel {
     /**
      * Sets the app name to the ActionBar title.
      */
-    public void resetActionBarTitle() {
-        mActionBarTitle.setValue(mContext.getString(R.string.app_name));
+    public void resetActionBarTitle(Context context) {
+        mActionBarTitle.setValue(context.getString(R.string.app_name));
         mActionBarTitle.removeObserver(mActionBarTitleObserver);
     }
 
@@ -215,9 +205,5 @@ public class EditorViewModel extends ViewModel {
         view.startAnimation(fadeAnimation);
         // If fading out, hide the view after animation is ended.
         if (!fadeIn) view.postDelayed(() -> view.setVisibility(View.GONE), 500);
-    }
-
-    private void displayLongToast(String message) {
-        Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
     }
 }

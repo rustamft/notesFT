@@ -24,7 +24,7 @@
                 android:importantForAutofill="no"
                 android:labelFor="@id/edittext_note"
                 android:onTextChanged="@{() -> viewModel.onEditTextChanged(fabSave)}"
-                android:text="@{() -> viewModel.mNote.getText()}"
+                android:text="@{viewModel.mNote.text}"
                 android:theme="@style/EditText"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"

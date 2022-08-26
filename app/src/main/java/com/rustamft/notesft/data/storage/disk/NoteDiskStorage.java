@@ -21,17 +21,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class DiskNoteStorage implements NoteStorage {
+public class NoteDiskStorage implements NoteStorage {
 
     private final Context mContext;
 
-    public DiskNoteStorage(Context context) {
+    public NoteDiskStorage(Context context) {
         this.mContext = context;
     }
 
     @Override
-    public Boolean save(NoteData note) throws IOException {
-        if (note.getFile().exists()) {
+    public Boolean save(NoteDataModel note) throws IOException {
+        if (note.file().exists()) {
             writeIntoExisting(note);
         } else {
             writeIntoNew(note);
@@ -40,8 +40,8 @@ public class DiskNoteStorage implements NoteStorage {
     }
 
     @Override
-    public Boolean delete(NoteData note) throws IOException {
-        DocumentFile file = note.getFile();
+    public Boolean delete(NoteDataModel note) throws IOException {
+        DocumentFile file = note.file();
         if (file != null) {
             file.delete();
         } else {
@@ -51,27 +51,37 @@ public class DiskNoteStorage implements NoteStorage {
     }
 
     @Override
-    public NoteData rename(NoteData note, String newName) throws FileNotFoundException {
-        DocumentFile oldNameFile = note.getFile();
-        // Create a virtual file with entered name
-        DocumentFile newNameFile = buildDocumentFile(note.getWorkingDir(), newName);
+    public NoteDataModel rename(NoteDataModel note, String newName) throws FileNotFoundException {
+        DocumentFile oldNameFile = note.file();
+        DocumentFile newNameFile = buildDocumentFile( // Create a virtual file with entered name
+                note.workingDir,
+                newName
+        );
         if (newNameFile == null || newNameFile.exists()) {
-            return note;
+            throw new FileNotFoundException("New file already exists or couldn't be instantiated");
         }
         Uri renamedFileUri = DocumentsContract.renameDocument(
-                mContext.getContentResolver(), oldNameFile.getUri(), newName
+                mContext.getContentResolver(),
+                oldNameFile.getUri(),
+                newName
         );
-        newNameFile = DocumentFile.fromSingleUri(mContext, renamedFileUri);
-        if (newNameFile != null && newNameFile.exists()) {
-            // The note now is a new file instance, actualise the file variables
-            note.setFile(newNameFile);
-            note.setName(newName);
+        newNameFile = DocumentFile.fromSingleUri(
+                mContext,
+                renamedFileUri
+        );
+        if (newNameFile == null || !newNameFile.exists()) {
+            throw new FileNotFoundException("Renamed file is absent or couldn't be instantiated");
         }
-        return note;
+        return new NoteDataModel( // The note now is a new file instance, actualise note
+                newName,
+                note.text,
+                note.workingDir,
+                newNameFile
+        );
     }
 
     @Override
-    public NoteData get(String noteName, String workingDir) throws NullPointerException {
+    public NoteDataModel get(String noteName, String workingDir) throws NullPointerException {
         DocumentFile file = buildDocumentFile(workingDir, noteName);
         String text;
         if (file.exists()) {
@@ -79,11 +89,11 @@ public class DiskNoteStorage implements NoteStorage {
         } else {
             text = "";
         }
-        return new NoteData(
-                workingDir,
-                file,
+        return new NoteDataModel(
                 noteName,
-                text
+                text,
+                workingDir,
+                file
         );
     }
 
@@ -156,23 +166,23 @@ public class DiskNoteStorage implements NoteStorage {
         );
     }
 
-    private void writeIntoExisting(NoteData note) throws IOException {
+    private void writeIntoExisting(NoteDataModel note) throws IOException {
         // Write the text to the file
         ParcelFileDescriptor pfd = mContext.getContentResolver().openFileDescriptor(
-                note.getFile().getUri(),
+                note.file().getUri(),
                 "wt"
         );
         FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());
-        fos.write(note.getText().getBytes());
+        fos.write(note.text.getBytes());
         fos.close();
         pfd.close();
     }
 
-    private void writeIntoNew(NoteData note) throws IOException {
+    private void writeIntoNew(NoteDataModel note) throws IOException {
         // Get a valid parent URI
         DocumentFile parentDocument = DocumentFile.fromTreeUri(
                 mContext,
-                Uri.parse(note.getWorkingDir())
+                Uri.parse(note.workingDir)
         );
         if (parentDocument == null) {
             throw new IOException("Parent document is null");
@@ -183,11 +193,10 @@ public class DiskNoteStorage implements NoteStorage {
                 mContext.getContentResolver(),
                 parentDocumentUri,
                 "",
-                note.getName()
+                note.name
         );
         if (noteFileUri == null) {
             throw new IOException("Note file URI is null");
         }
-        //note.setFile(DocumentFile.fromSingleUri(mContext, noteFileUri)); TODO: check if needed
     }
 }

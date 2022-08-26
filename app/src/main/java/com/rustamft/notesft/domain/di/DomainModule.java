@@ -2,6 +2,7 @@ package com.rustamft.notesft.domain.di;
 
 import android.content.Context;
 
+import com.rustamft.notesft.domain.util.PermissionChecker;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 
 import javax.inject.Singleton;
@@ -14,7 +15,13 @@ import dagger.hilt.components.SingletonComponent;
 
 @Module
 @InstallIn(SingletonComponent.class)
-class DomainModule {
+public class DomainModule {
+
+    @Provides
+    @Singleton
+    PermissionChecker providePermissionChecker(@ApplicationContext Context context) {
+        return new PermissionChecker(context);
+    }
 
     @Provides
     @Singleton

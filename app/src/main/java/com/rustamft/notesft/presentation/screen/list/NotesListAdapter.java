@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewHolder> {
 
-    private final ListViewModel mViewModel;
+    private final ListViewModel mViewModel; // TODO: fix, this leaks viewmodel
     private final LiveData<List<String>> mNoteNameList; // Cached copy of notes list
 
     NotesListAdapter(

@@ -1,10 +1,7 @@
 package com.rustamft.notesft.presentation.screen.list;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -20,11 +17,13 @@ import androidx.lifecycle.ViewModel;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.rustamft.notesft.BuildConfig;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
 import com.rustamft.notesft.domain.util.Constants;
+import com.rustamft.notesft.domain.util.PermissionChecker;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 
 import java.util.List;
@@ -33,31 +32,29 @@ import java.util.Objects;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
-import dagger.hilt.android.qualifiers.ApplicationContext;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
 public class ListViewModel extends ViewModel {
 
-    private final Application mContext;
     private final AppPreferencesRepository mAppPreferencesRepository;
     private final NoteRepository mNoteRepository;
+    private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<List<String>> mNoteNameList = new MutableLiveData<>();
-    private String mAppVersion = Constants.NOT_AVAILABLE;
 
     @Inject
     ListViewModel(
-            @ApplicationContext Application context,
             AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository,
+            PermissionChecker permissionChecker,
             ToastDisplay toastDisplay
     ) {
-        mContext = context;
         mAppPreferencesRepository = appPreferencesRepository;
         mNoteRepository = noteRepository;
         mToastDisplay = toastDisplay;
+        mPermissionChecker = permissionChecker;
     }
 
     @Override
@@ -88,10 +85,10 @@ public class ListViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 editText.getText().toString(),
-                                mAppPreferencesRepository.getWorkingDir()
+                                mAppPreferencesRepository.getAppPreferences().workingDir
                         ).subscribe(
                                 note -> {
-                                    if (note.getExists()) {
+                                    if (note.exists()) {
                                         mToastDisplay.showShort(R.string.note_same_name_exists);
                                     } else {
                                         createNote(view, note);
@@ -122,7 +119,7 @@ public class ListViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_yes, (dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 noteName,
-                                mAppPreferencesRepository.getWorkingDir()
+                                mAppPreferencesRepository.getAppPreferences().workingDir
                         ).subscribe(
                                 this::deleteNote,
                                 error -> mToastDisplay.showLong(error.getMessage())
@@ -133,7 +130,9 @@ public class ListViewModel extends ViewModel {
     }
 
     boolean hasWorkingDirPermission() {
-        return mAppPreferencesRepository.hasWorkingDirPermission();
+        return mPermissionChecker.hasWorkingDirPermission(
+                mAppPreferencesRepository.getAppPreferences().workingDir
+        );
     }
 
     MutableLiveData<List<String>> getNoteNameList() {
@@ -143,7 +142,7 @@ public class ListViewModel extends ViewModel {
     void updateNoteNameList() {
         mDisposables.add(
                 mNoteRepository.getNoteNameList(
-                        mAppPreferencesRepository.getWorkingDir()
+                        mAppPreferencesRepository.getAppPreferences().workingDir
                 ).subscribe(
                         mNoteNameList::postValue,
                         error -> mToastDisplay.showLong(error.getMessage())
@@ -152,7 +151,7 @@ public class ListViewModel extends ViewModel {
     }
 
     int getNightMode() {
-        return mAppPreferencesRepository.getNightMode();
+        return mAppPreferencesRepository.getAppPreferences().nightMode;
     }
 
     void switchNightMode() {
@@ -168,7 +167,7 @@ public class ListViewModel extends ViewModel {
 
     void displayAboutApp(Context context) {
         String message =
-                context.getString(R.string.about_app_content) + getAppVersion();
+                context.getString(R.string.about_app_content) + BuildConfig.VERSION_NAME;
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle(R.string.about_app)
                 .setMessage(message)
@@ -200,7 +199,7 @@ public class ListViewModel extends ViewModel {
     private void createNote(View view, Note note) {
         mDisposables.add(
                 mNoteRepository.saveNote(note).subscribe(
-                        success -> navigateNext(view, note.getName()),
+                        success -> navigateNext(view, note.name),
                         error -> mToastDisplay.showLong(error.getMessage())
                 )
         );
@@ -216,20 +215,6 @@ public class ListViewModel extends ViewModel {
                         error -> mToastDisplay.showLong(error.getMessage())
                 )
         );
-    }
-
-    private String getAppVersion() { // TODO: implement through Build class
-        if (mAppVersion.equals(Constants.NOT_AVAILABLE)) {
-            try {
-                Context context = mContext.getApplicationContext();
-                PackageInfo packageInfo =
-                        context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-                mAppVersion = packageInfo.versionName;
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return mAppVersion;
     }
 
     private void openGitHub(Context context) {

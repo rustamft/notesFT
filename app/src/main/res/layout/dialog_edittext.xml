@@ -9,7 +9,7 @@
     <EditText
         android:id="@+id/edittext_dialog"
         style="@style/DialogEditText"
-        android:hint="@string/enter_note_name"
+        android:hint="@string/note_enter_name"
         android:importantForAutofill="no"
         android:theme="@style/DialogEditText" />
 

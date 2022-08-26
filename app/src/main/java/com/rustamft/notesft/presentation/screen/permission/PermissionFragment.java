@@ -52,7 +52,7 @@ public class PermissionFragment extends Fragment {
         activityLauncher = BetterActivityResult.registerActivityForResult(this);
         if (getArguments() != null) { // If it is dir changing from the list fragment
             chooseWorkingDir();
-        } else if (viewModel.hasPermission()) { // If the app can read files in the dir
+        } else if (viewModel.hasWorkingDirPermission()) { // If the app can read files in the dir
             navigateNext();
         }
     }

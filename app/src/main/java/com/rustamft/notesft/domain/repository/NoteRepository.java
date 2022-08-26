@@ -1,6 +1,6 @@
 package com.rustamft.notesft.domain.repository;
 
-import com.rustamft.notesft.data.storage.disk.NoteData;
+import com.rustamft.notesft.data.storage.disk.NoteDataModel;
 import com.rustamft.notesft.domain.model.Note;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public interface NoteRepository {
 
     Single<Boolean> deleteNote(Note note);
 
-    Single<NoteData> renameNote(Note note, String newName);
+    Single<NoteDataModel> renameNote(Note note, String newName);
 
     Single<Note> getNote(String noteName, String workingDir);
 

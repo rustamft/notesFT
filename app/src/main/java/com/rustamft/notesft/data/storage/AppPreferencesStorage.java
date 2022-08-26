@@ -1,9 +1,9 @@
 package com.rustamft.notesft.data.storage;
 
-import com.rustamft.notesft.data.storage.sharedpreferences.AppPreferencesData;
+import com.rustamft.notesft.data.storage.shared.AppPreferencesDataModel;
 
 public interface AppPreferencesStorage {
 
-    void save(AppPreferencesData appPreferences);
-    AppPreferencesData get();
+    void save(AppPreferencesDataModel appPreferences);
+    AppPreferencesDataModel get();
 }

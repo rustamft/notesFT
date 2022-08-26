@@ -6,8 +6,8 @@ import com.rustamft.notesft.data.repository.AppPreferencesRepositoryImpl;
 import com.rustamft.notesft.data.repository.NoteRepositoryImpl;
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
 import com.rustamft.notesft.data.storage.NoteStorage;
-import com.rustamft.notesft.data.storage.disk.DiskNoteStorage;
-import com.rustamft.notesft.data.storage.sharedpreferences.SharedPreferencesStorage;
+import com.rustamft.notesft.data.storage.disk.NoteDiskStorage;
+import com.rustamft.notesft.data.storage.shared.AppPreferencesSharedStorage;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
 
@@ -21,12 +21,12 @@ import dagger.hilt.components.SingletonComponent;
 
 @Module
 @InstallIn(SingletonComponent.class)
-class DataModule {
+public class DataModule {
 
     @Provides
     @Singleton
     AppPreferencesStorage provideAppPreferencesStorage(@ApplicationContext Context context) {
-        return new SharedPreferencesStorage(context);
+        return new AppPreferencesSharedStorage(context);
     }
 
     @Provides
@@ -41,7 +41,7 @@ class DataModule {
     @Provides
     @Singleton
     NoteStorage provideNoteStorage(@ApplicationContext Context context) {
-        return new DiskNoteStorage(context);
+        return new NoteDiskStorage(context);
     }
 
     @Provides

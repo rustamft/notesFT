@@ -1,7 +1,7 @@
 package com.rustamft.notesft.data.repository;
 
 import com.rustamft.notesft.data.storage.NoteStorage;
-import com.rustamft.notesft.data.storage.disk.NoteData;
+import com.rustamft.notesft.data.storage.disk.NoteDataModel;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.NoteRepository;
 
@@ -18,15 +18,15 @@ public class NoteRepositoryImpl implements NoteRepository {
     }
 
     public Single<Boolean> saveNote(Note note) {
-        return Single.fromCallable(() -> mNoteStorage.save((NoteData) note));
+        return Single.fromCallable(() -> mNoteStorage.save((NoteDataModel) note));
     }
 
     public Single<Boolean> deleteNote(Note note) {
-        return Single.fromCallable(() -> mNoteStorage.delete((NoteData) note));
+        return Single.fromCallable(() -> mNoteStorage.delete((NoteDataModel) note));
     }
 
-    public Single<NoteData> renameNote(Note note, String newName) {
-        return Single.fromCallable(() -> mNoteStorage.rename((NoteData) note, newName));
+    public Single<NoteDataModel> renameNote(Note note, String newName) {
+        return Single.fromCallable(() -> mNoteStorage.rename((NoteDataModel) note, newName));
     }
 
     public Single<Note> getNote(String noteName, String workingDir) {

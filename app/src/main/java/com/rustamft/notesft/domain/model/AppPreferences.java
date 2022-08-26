@@ -1,7 +1,15 @@
 package com.rustamft.notesft.domain.model;
 
-public abstract class AppPreferences { // TODO: remove if is not used
+public abstract class AppPreferences {
 
-    public int nightMode;
-    public String workingDir;
+    public final int nightMode;
+    public final String workingDir;
+
+    public AppPreferences(
+            int nightMode,
+            String workingDir
+    ) {
+        this.nightMode = nightMode;
+        this.workingDir = workingDir;
+    }
 }

@@ -71,7 +71,15 @@ public class ListFragment extends Fragment {
         mBinding.setAdapter(
                 new NotesListAdapter(this, mViewModel)
         );
-        AppCompatDelegate.setDefaultNightMode(mViewModel.getNightMode());
+        switch (mViewModel.getNightMode()) { // To fix IDE complains about non-constant value
+            case AppCompatDelegate.MODE_NIGHT_YES:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case AppCompatDelegate.MODE_NIGHT_NO:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            default:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
+        }
         registerForContextMenu(mBinding.recyclerviewList);
     }
 

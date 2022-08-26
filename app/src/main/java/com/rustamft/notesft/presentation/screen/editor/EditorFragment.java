@@ -100,7 +100,7 @@ public class EditorFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         callback.remove();
-        viewModel.resetActionBarTitle();
+        viewModel.resetActionBarTitle(requireContext());
         binding = null;
     }
 }
