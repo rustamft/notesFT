@@ -24,14 +24,14 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class EditorFragment extends Fragment {
 
-    private EditorViewModel viewModel;
-    private FragmentEditorBinding binding;
-    OnBackPressedCallback callback;
+    private EditorViewModel mViewModel;
+    private FragmentEditorBinding mBinding;
+    private OnBackPressedCallback mCallback;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(EditorViewModel.class);
+        mViewModel = new ViewModelProvider(this).get(EditorViewModel.class);
         setHasOptionsMenu(true);  // To make onCreateOptionsMenu work
     }
 
@@ -41,13 +41,13 @@ public class EditorFragment extends Fragment {
             ViewGroup container,
             Bundle savedInstanceState
     ) {
-        // Enable ActionBar back button.
+        // Enable ActionBar back button
         ActionBar actionBar = ((MainActivity) requireActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        binding = FragmentEditorBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        mBinding = FragmentEditorBinding.inflate(inflater, container, false);
+        return mBinding.getRoot();
     }
 
     @Override
@@ -58,22 +58,22 @@ public class EditorFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        binding.setViewModel(viewModel);
-        // Callback to modify PopUp (back) action behavior.
-        callback = new OnBackPressedCallback(true) {
+        mBinding.setViewModel(mViewModel);
+        // Callback to modify PopUp (back) action behavior
+        mCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                viewModel.onBackPressed(binding.fabSave);
+                mViewModel.onBackPressed(mBinding.fabSave);
             }
         };
-        viewModel.registerActionBarTitleObserver((MainActivity) requireActivity());
+        mViewModel.registerActionBarTitleObserver((MainActivity) requireActivity());
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // Modify PopUp (back) action behavior.
-        requireActivity().getOnBackPressedDispatcher().addCallback(callback);
+        // Modify PopUp (back) action behavior
+        requireActivity().getOnBackPressedDispatcher().addCallback(mCallback);
     }
 
     @Override
@@ -83,13 +83,13 @@ public class EditorFragment extends Fragment {
         final int ACTION_ABOUT_NOTE_ID = R.id.action_about_note;
         switch (item.getItemId()) {
             case android.R.id.home:
-                viewModel.onBackPressed(binding.fabSave);
+                mViewModel.onBackPressed(mBinding.fabSave);
                 return true;
             case ACTION_RENAME_ID:
-                viewModel.promptRename(requireView());
+                mViewModel.promptRename(requireView());
                 return true;
             case ACTION_ABOUT_NOTE_ID:
-                viewModel.displayAboutNote(requireContext());
+                mViewModel.displayAboutNote(requireContext());
                 return true;
         }
 
@@ -99,8 +99,8 @@ public class EditorFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        callback.remove();
-        viewModel.resetActionBarTitle(requireContext());
-        binding = null;
+        mCallback.remove();
+        mViewModel.resetActionBarTitle(requireContext());
+        mBinding = null;
     }
 }

@@ -36,7 +36,7 @@ public class EditorViewModel extends ViewModel {
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
     private androidx.lifecycle.Observer<String> mActionBarTitleObserver;
-    public Note mNote; // TODO: make not exposed
+    public Note mNote; // TODO: make not exposed, has no text after save and reopen (race cond.)
 
     @Inject
     public EditorViewModel(
@@ -79,9 +79,12 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void onNoteSave(View view, EditText editText) {
-        mNote.text = editText.getText().toString();
+        Note.CopyBuilder noteCopyBuilder = mNote.copyBuilder();
+        noteCopyBuilder.setText(editText.getText().toString());
         mDisposables.add(
-                mNoteRepository.saveNote(mNote).subscribe(
+                mNoteRepository.saveNote(
+                        noteCopyBuilder.build()
+                ).subscribe(
                         success -> navigateBack(view),
                         error -> mToastDisplay.showLong(error.getMessage())
                 )

@@ -1,6 +1,6 @@
 package com.rustamft.notesft.data.storage;
 
-import com.rustamft.notesft.data.storage.disk.NoteDataModel;
+import com.rustamft.notesft.data.model.NoteDataModel;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
-import com.rustamft.notesft.data.storage.shared.AppPreferencesDataModel;
+import com.rustamft.notesft.data.model.AppPreferencesDataModel;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 
 public class AppPreferencesRepositoryImpl implements AppPreferencesRepository {

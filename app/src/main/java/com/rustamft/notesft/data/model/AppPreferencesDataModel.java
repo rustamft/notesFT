@@ -1,4 +1,4 @@
-package com.rustamft.notesft.data.storage.shared;
+package com.rustamft.notesft.data.model;
 
 import com.rustamft.notesft.domain.model.AppPreferences;
 

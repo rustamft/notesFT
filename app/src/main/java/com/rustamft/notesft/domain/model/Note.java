@@ -2,10 +2,10 @@ package com.rustamft.notesft.domain.model;
 
 import androidx.documentfile.provider.DocumentFile;
 
-public abstract class Note {
+public class Note {
 
-    public String name;
-    public String text;
+    public final String name;
+    public final String text;
     public final String workingDir;
     private final DocumentFile file;
 
@@ -15,10 +15,10 @@ public abstract class Note {
             String workingDir,
             DocumentFile file
     ) {
-        this.workingDir = workingDir;
-        this.file = file;
         this.name = name;
         this.text = text;
+        this.workingDir = workingDir;
+        this.file = file;
     }
 
     public String path() {
@@ -39,5 +39,34 @@ public abstract class Note {
 
     public DocumentFile file() {
         return file;
+    }
+
+    public CopyBuilder copyBuilder() {
+        return new CopyBuilder();
+    }
+
+    public class CopyBuilder {
+
+        private String mName = name;
+        private String mText = text;
+        private final String mWorkingDir = workingDir;
+        private final DocumentFile mFile = file;
+
+        public void setName(String name) {
+            mName = name;
+        }
+
+        public void setText(String text) {
+            mText = text;
+        }
+
+        public Note build() {
+            return new Note(
+                    mName,
+                    mText,
+                    mWorkingDir,
+                    mFile
+            );
+        }
     }
 }
