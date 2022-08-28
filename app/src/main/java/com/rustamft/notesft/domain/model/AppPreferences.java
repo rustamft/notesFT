@@ -1,6 +1,6 @@
 package com.rustamft.notesft.domain.model;
 
-public abstract class AppPreferences {
+public class AppPreferences {
 
     public final int nightMode;
     public final String workingDir;
@@ -11,5 +11,35 @@ public abstract class AppPreferences {
     ) {
         this.nightMode = nightMode;
         this.workingDir = workingDir;
+    }
+
+    public AppPreferences() {
+        this.nightMode = 0;
+        this.workingDir = "";
+    }
+
+    public CopyBuilder copyBuilder() {
+        return new CopyBuilder();
+    }
+
+    public class CopyBuilder {
+
+        private int mNightModeCopy = nightMode;
+        private String mWorkingDirCopy = workingDir;
+
+        public void setNightMode(int nightMode) {
+            mNightModeCopy = nightMode;
+        }
+
+        public void setWorkingDir(String workingDir) {
+            mWorkingDirCopy = workingDir;
+        }
+
+        public AppPreferences build() {
+            return new AppPreferences(
+                    mNightModeCopy,
+                    mWorkingDirCopy
+            );
+        }
     }
 }

@@ -1,53 +1,53 @@
 package com.rustamft.notesft.data.repository;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-
-import com.rustamft.notesft.data.storage.AppPreferencesStorage;
 import com.rustamft.notesft.data.model.AppPreferencesDataModel;
+import com.rustamft.notesft.data.storage.AppPreferencesStorage;
+import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
 
-    private final Context mContext;
     private final AppPreferencesStorage mAppPreferencesStorage;
-    private AppPreferencesDataModel mAppPreferences;
 
-    public AppPreferencesRepositoryImpl(
-            Context context,
-            AppPreferencesStorage appPreferencesStorage
-    ) {
-        mContext = context;
+    public AppPreferencesRepositoryImpl(AppPreferencesStorage appPreferencesStorage) {
         mAppPreferencesStorage = appPreferencesStorage;
-        mAppPreferences = appPreferencesStorage.get();
     }
 
-    public void setNightMode(int nightMode) {
-        mAppPreferencesStorage.save(
-                new AppPreferencesDataModel(
-                        nightMode,
-                        mAppPreferences.workingDir
+    public Single<Boolean> saveAppPreferences(AppPreferences appPreferences) {
+        return Single.fromCallable(
+                        () -> mAppPreferencesStorage.save(
+                                convertForData(appPreferences)
+                        )
                 )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Single<AppPreferences> getAppPreferences() {
+        return Single.fromCallable(
+                        () -> convertForDomain(
+                                mAppPreferencesStorage.get()
+                        )
+                )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    private AppPreferencesDataModel convertForData(AppPreferences appPreferences) {
+        return new AppPreferencesDataModel(
+                appPreferences.nightMode,
+                appPreferences.workingDir
         );
     }
 
-    public void setWorkingDir(Intent resultData) {
-        Uri directoryUri = resultData.getData(); // Get URI from result
-        final int flags = // Persist the permission
-                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-        mContext.getContentResolver().takePersistableUriPermission(directoryUri, flags);
-        String workingDir = directoryUri.toString();
-        mAppPreferencesStorage.save(
-                new AppPreferencesDataModel(
-                        mAppPreferences.nightMode,
-                        workingDir
-                )
+    private AppPreferences convertForDomain(AppPreferencesDataModel appPreferences) {
+        return new AppPreferences(
+                appPreferences.nightMode,
+                appPreferences.workingDir
         );
-    }
-
-    public AppPreferencesDataModel getAppPreferences() {
-        mAppPreferences = mAppPreferencesStorage.get();
-        return mAppPreferences;
     }
 }

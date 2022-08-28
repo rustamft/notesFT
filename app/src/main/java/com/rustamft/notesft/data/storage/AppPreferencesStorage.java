@@ -4,6 +4,6 @@ import com.rustamft.notesft.data.model.AppPreferencesDataModel;
 
 public interface AppPreferencesStorage {
 
-    void save(AppPreferencesDataModel appPreferences);
+    boolean save(AppPreferencesDataModel appPreferences);
     AppPreferencesDataModel get();
 }

@@ -32,10 +32,9 @@ public class DataModule {
     @Provides
     @Singleton
     AppPreferencesRepository provideAppPreferencesRepository(
-            @ApplicationContext Context context,
             AppPreferencesStorage appPreferencesStorage
     ) {
-        return new AppPreferencesRepositoryImpl(context, appPreferencesStorage);
+        return new AppPreferencesRepositoryImpl(appPreferencesStorage);
     }
 
     @Provides

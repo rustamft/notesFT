@@ -1,14 +1,12 @@
 package com.rustamft.notesft.domain.repository;
 
-import android.content.Intent;
-
 import com.rustamft.notesft.domain.model.AppPreferences;
+
+import io.reactivex.rxjava3.core.Single;
 
 public interface AppPreferencesRepository {
 
-    void setNightMode(int mode);
+    Single<Boolean> saveAppPreferences(AppPreferences appPreferences);
 
-    void setWorkingDir(Intent resultData);
-
-    AppPreferences getAppPreferences();
+    Single<AppPreferences> getAppPreferences();
 }

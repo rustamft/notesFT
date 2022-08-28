@@ -12,12 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
-import androidx.navigation.fragment.NavHostFragment;
 
-import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.FragmentPermissionBinding;
 import com.rustamft.notesft.domain.util.BetterActivityResult;
+import com.rustamft.notesft.domain.util.Constants;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -47,13 +45,14 @@ public class PermissionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        binding.setFragment(this);
+        binding.setFragment(this); // TODO: try to avoid pass fragment to binding
         // Register this fragment to receive the requestPermission result
         activityLauncher = BetterActivityResult.registerActivityForResult(this);
-        if (getArguments() != null) { // If it is dir changing from the list fragment
-            chooseWorkingDir();
-        } else if (viewModel.hasWorkingDirPermission()) { // If the app can read files in the dir
-            navigateNext();
+        Bundle arguments = getArguments();
+        if (arguments != null && arguments.getBoolean(Constants.CHOOSE_WORKING_DIR_IMMEDIATELY)) {
+            chooseWorkingDir(); // If it is dir changing from the list fragment
+        } else {
+            viewModel.checkDirPermission(requireView());
         }
     }
 
@@ -63,21 +62,15 @@ public class PermissionFragment extends Fragment {
         binding = null;
     }
 
-    public void chooseWorkingDir() {
+    private void chooseWorkingDir() {
         // Open dir choosing dialog
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         activityLauncher.launch(intent, result -> {
             if (result.getResultCode() == Activity.RESULT_OK) {
                 Intent data = result.getData();
                 // Save to shared preferences and persist permission
-                viewModel.setWorkingDir(data);
-                navigateNext(); // Show notes list fragment
+                viewModel.saveWorkingDirPreference(data, requireView());
             }
         });
-    }
-
-    private void navigateNext() {
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.action_permissionFragment_to_listFragment);
     }
 }

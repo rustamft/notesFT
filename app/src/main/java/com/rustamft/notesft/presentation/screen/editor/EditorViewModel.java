@@ -51,11 +51,18 @@ public class EditorViewModel extends ViewModel {
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
             mDisposables.add(
-                    mNoteRepository.getNote(
-                            noteName,
-                            appPreferencesRepository.getAppPreferences().workingDir
-                    ).subscribe(
-                            note -> mNote = note,
+                    appPreferencesRepository.getAppPreferences().subscribe(
+                            appPreferences -> {
+                                mDisposables.add(
+                                        mNoteRepository.getNote(
+                                                noteName,
+                                                appPreferences.workingDir
+                                        ).subscribe(
+                                                note -> mNote = note,
+                                                error -> mToastDisplay.showLong(error.getMessage())
+                                        )
+                                );
+                            },
                             error -> mToastDisplay.showLong(error.getMessage())
                     )
             );

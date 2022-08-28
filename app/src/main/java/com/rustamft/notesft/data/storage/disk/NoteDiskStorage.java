@@ -31,7 +31,7 @@ public class NoteDiskStorage implements NoteStorage {
     }
 
     @Override
-    public Boolean save(NoteDataModel note) throws IOException {
+    public boolean save(NoteDataModel note) throws IOException {
         if (note.file().exists()) {
             writeIntoExisting(note);
         } else {
@@ -41,7 +41,7 @@ public class NoteDiskStorage implements NoteStorage {
     }
 
     @Override
-    public Boolean delete(NoteDataModel note) throws IOException {
+    public boolean delete(NoteDataModel note) throws IOException {
         DocumentFile file = note.file();
         if (file != null) {
             file.delete();

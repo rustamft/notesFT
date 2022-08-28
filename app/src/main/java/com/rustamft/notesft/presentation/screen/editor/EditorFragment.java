@@ -58,7 +58,7 @@ public class EditorFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mBinding.setViewModel(mViewModel);
+        mBinding.setViewModel(mViewModel); // TODO: try to avoid passing viewmodel
         // Callback to modify PopUp (back) action behavior
         mCallback = new OnBackPressedCallback(true) {
             @Override

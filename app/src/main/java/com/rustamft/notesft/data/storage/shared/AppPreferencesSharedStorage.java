@@ -11,25 +11,26 @@ import com.rustamft.notesft.domain.util.Constants;
 
 public class AppPreferencesSharedStorage implements AppPreferencesStorage {
 
-    private final SharedPreferences sharedPrefs;
+    private final SharedPreferences mSharedPreferences;
 
     public AppPreferencesSharedStorage(Context context) {
-        sharedPrefs = context.getSharedPreferences(Constants.SHARED_PREF_FILE, MODE_PRIVATE);
+        mSharedPreferences = context.getSharedPreferences(Constants.SHARED_PREF_FILE, MODE_PRIVATE);
     }
 
     @Override
-    public void save(AppPreferencesDataModel appPreferences) {
-        sharedPrefs
+    public boolean save(AppPreferencesDataModel appPreferences) {
+        mSharedPreferences
                 .edit()
                 .putInt(Constants.NIGHT_MODE, appPreferences.nightMode)
-                .putString(Constants.WORKING_DIR_KEY, appPreferences.workingDir)
+                .putString(Constants.WORKING_DIR, appPreferences.workingDir)
                 .apply();
+        return appPreferences == get();
     }
 
     @Override
     public AppPreferencesDataModel get() {
-        int nightMode = sharedPrefs.getInt(Constants.NIGHT_MODE, 0);
-        String workingDir = sharedPrefs.getString(Constants.WORKING_DIR_KEY, null);
+        int nightMode = mSharedPreferences.getInt(Constants.NIGHT_MODE, 0);
+        String workingDir = mSharedPreferences.getString(Constants.WORKING_DIR, null);
         return new AppPreferencesDataModel(nightMode, workingDir);
     }
 }

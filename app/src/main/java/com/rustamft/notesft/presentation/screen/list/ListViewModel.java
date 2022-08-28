@@ -19,6 +19,7 @@ import androidx.navigation.Navigation;
 
 import com.rustamft.notesft.BuildConfig;
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
@@ -26,6 +27,7 @@ import com.rustamft.notesft.domain.util.Constants;
 import com.rustamft.notesft.domain.util.PermissionChecker;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,7 +44,12 @@ public class ListViewModel extends ViewModel {
     private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
-    private final MutableLiveData<List<String>> mNoteNameList = new MutableLiveData<>();
+    private final MutableLiveData<AppPreferences> mAppPreferences = new MutableLiveData<>(
+            new AppPreferences()
+    );
+    private final MutableLiveData<List<String>> mNoteNameList = new MutableLiveData<>(
+            new ArrayList<>()
+    );
 
     @Inject
     ListViewModel(
@@ -53,8 +60,11 @@ public class ListViewModel extends ViewModel {
     ) {
         mAppPreferencesRepository = appPreferencesRepository;
         mNoteRepository = noteRepository;
-        mToastDisplay = toastDisplay;
         mPermissionChecker = permissionChecker;
+        mToastDisplay = toastDisplay;
+        mDisposables.add(
+                mAppPreferencesRepository.getAppPreferences().subscribe(mAppPreferences::postValue)
+        );
     }
 
     @Override
@@ -85,7 +95,7 @@ public class ListViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 editText.getText().toString(),
-                                mAppPreferencesRepository.getAppPreferences().workingDir
+                                Objects.requireNonNull(mAppPreferences.getValue()).workingDir
                         ).subscribe(
                                 note -> {
                                     if (note.exists()) {
@@ -119,7 +129,7 @@ public class ListViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_yes, (dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 noteName,
-                                mAppPreferencesRepository.getAppPreferences().workingDir
+                                Objects.requireNonNull(mAppPreferences.getValue()).workingDir
                         ).subscribe(
                                 this::deleteNote,
                                 error -> mToastDisplay.showLong(error.getMessage())
@@ -129,9 +139,9 @@ public class ListViewModel extends ViewModel {
                 .show();
     }
 
-    boolean hasWorkingDirPermission() {
+    protected boolean hasWorkingDirPermission() {
         return mPermissionChecker.hasWorkingDirPermission(
-                mAppPreferencesRepository.getAppPreferences().workingDir
+                Objects.requireNonNull(mAppPreferences.getValue()).workingDir
         );
     }
 
@@ -139,10 +149,10 @@ public class ListViewModel extends ViewModel {
         return mNoteNameList;
     }
 
-    void updateNoteNameList() {
+    protected void updateNoteNameList() {
         mDisposables.add(
                 mNoteRepository.getNoteNameList(
-                        mAppPreferencesRepository.getAppPreferences().workingDir
+                        Objects.requireNonNull(mAppPreferences.getValue()).workingDir
                 ).subscribe(
                         mNoteNameList::postValue,
                         error -> mToastDisplay.showLong(error.getMessage())
@@ -150,22 +160,39 @@ public class ListViewModel extends ViewModel {
         );
     }
 
-    int getNightMode() {
-        return mAppPreferencesRepository.getAppPreferences().nightMode;
+    protected int getNightMode() {
+        return Objects.requireNonNull(mAppPreferences.getValue()).nightMode;
     }
 
-    void switchNightMode() {
+    protected void switchNightMode() {
         int nightMode = AppCompatDelegate.getDefaultNightMode();
         if (nightMode != AppCompatDelegate.MODE_NIGHT_YES) {
             nightMode = AppCompatDelegate.MODE_NIGHT_YES;
         } else {
             nightMode = AppCompatDelegate.MODE_NIGHT_NO;
         }
-        AppCompatDelegate.setDefaultNightMode(nightMode);
-        mAppPreferencesRepository.setNightMode(nightMode);
+        AppPreferences appPreferences = Objects.requireNonNull(mAppPreferences.getValue());
+        if (appPreferences.workingDir.isEmpty()) {
+            mToastDisplay.showLong(R.string.something_went_wrong);
+            return;
+        }
+        AppPreferences.CopyBuilder appPreferencesCopyBuilder =
+                mAppPreferences.getValue().copyBuilder();
+        appPreferencesCopyBuilder.setNightMode(nightMode);
+        AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
+        mDisposables.add(
+                mAppPreferencesRepository.saveAppPreferences(appPreferencesCopy).subscribe(
+                        success -> {
+                            if (success) AppCompatDelegate.setDefaultNightMode(
+                                    appPreferencesCopy.nightMode
+                            );
+                        },
+                        error -> mToastDisplay.showLong(error.getMessage())
+                )
+        );
     }
 
-    void displayAboutApp(Context context) {
+    protected void displayAboutApp(Context context) {
         String message =
                 context.getString(R.string.about_app_content) + BuildConfig.VERSION_NAME;
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
@@ -181,7 +208,7 @@ public class ListViewModel extends ViewModel {
         builder.show();
     }
 
-    void animateRotation(View view) {
+    protected void animateRotation(View view) {
         RotateAnimation rotate = new RotateAnimation(0, 360,
                 Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
@@ -193,6 +220,7 @@ public class ListViewModel extends ViewModel {
     private void navigateBackToWorkingDirChoosing(View view) {
         NavController navController = Navigation.findNavController(view);
         Bundle bundle = new Bundle();
+        bundle.putBoolean(Constants.CHOOSE_WORKING_DIR_IMMEDIATELY, true);
         navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
     }
 
