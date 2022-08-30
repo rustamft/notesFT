@@ -50,28 +50,14 @@ public class PermissionViewModel extends ViewModel {
         super.onCleared();
     }
 
-    void navigateNext(View view) {
-        NavController navController = Navigation.findNavController(view);
-        navController.navigate(R.id.action_permissionFragment_to_listFragment);
-    }
-
-    protected void checkDirPermission(View view) {
-        mDisposables.add(
-                mAppPreferencesRepository.getAppPreferences().subscribe(appPreferences -> {
-                    if (mPermissionChecker.hasWorkingDirPermission(appPreferences.workingDir)) {
-                        navigateNext(view);
-                    }
-                })
-        );
-    }
-
     protected void saveWorkingDirPreference(Intent resultData, View view) {
         AppPreferences appPreferences = mAppPreferences.getValue();
         if (appPreferences == null) return;
-        String workingDir = extractWorkingDirFromResult(resultData, view.getContext());
+        Uri workingDirUri = resultData.getData();
+        persistWorkingDirPermission(workingDirUri, view.getContext().getApplicationContext());
         AppPreferences.CopyBuilder appPreferencesCopyBuilder =
                 mAppPreferences.getValue().copyBuilder();
-        appPreferencesCopyBuilder.setWorkingDir(workingDir);
+        appPreferencesCopyBuilder.setWorkingDir(workingDirUri.toString());
         mDisposables.add(
                 mAppPreferencesRepository.saveAppPreferences(
                         appPreferencesCopyBuilder.build()
@@ -84,11 +70,14 @@ public class PermissionViewModel extends ViewModel {
         );
     }
 
-    private String extractWorkingDirFromResult(Intent resultData, Context context) {
-        Uri directoryUri = resultData.getData(); // Get URI from result
-        final int flags = // Persist the permission
+    private void persistWorkingDirPermission(Uri workingDirUri, Context context) {
+        final int flags =
                 Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-        context.getContentResolver().takePersistableUriPermission(directoryUri, flags);
-        return directoryUri.toString();
+        context.getContentResolver().takePersistableUriPermission(workingDirUri, flags);
+    }
+
+    private void navigateNext(View view) {
+        NavController navController = Navigation.findNavController(view);
+        navController.navigate(R.id.action_permissionFragment_to_listFragment);
     }
 }

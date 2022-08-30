@@ -21,19 +21,30 @@ public class Note {
         mFile = file;
     }
 
+    public Note() {
+        this.name = "";
+        this.text = "";
+        this.workingDir = "";
+        mFile = null;
+    }
+
     public String path() {
+        if (mFile == null) return "";
         return mFile.getUri().toString();
     }
 
     public long length() {
+        if (mFile == null) return 0;
         return mFile.length();
     }
 
     public long lastModified() {
+        if (mFile == null) return 0;
         return mFile.lastModified();
     }
 
     public boolean exists() {
+        if (mFile == null) return false;
         return mFile.exists();
     }
 

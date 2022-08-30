@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -20,19 +20,20 @@ import java.util.Objects;
 
 public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewHolder> {
 
-    private final ListViewModel mViewModel; // TODO: fix, this leaks viewmodel
-    private final LiveData<List<String>> mNoteNameList; // Cached copy of notes list
+    private ListViewModel mViewModel; // TODO: fix, this leaks viewmodel
+    private final LiveData<List<String>> mNoteNameListLiveData; // Cached copy of notes list
 
     NotesListAdapter(
-            Fragment owner,
-            ListViewModel viewModel
+            LifecycleOwner lifecycleOwner,
+            ListViewModel viewModel,
+            LiveData<List<String>> noteNameListLiveData
     ) {
         super(new DiffCallback());
         mViewModel = viewModel;
-        mNoteNameList = viewModel.getNoteNameList();
-        mNoteNameList.observe(
-                owner.getViewLifecycleOwner(),
-                o -> submitList(mNoteNameList.getValue())
+        mNoteNameListLiveData = noteNameListLiveData;
+        mNoteNameListLiveData.observe(
+                lifecycleOwner,
+                this::submitList
         );
     }
 
@@ -55,27 +56,33 @@ public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewH
     }
 
     @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        mViewModel = null;
+    }
+
+    @Override
     public int getItemCount() {
-        if (mNoteNameList.getValue() == null) {
+        if (mNoteNameListLiveData.getValue() == null) {
             return 0;
         } else {
-            return mNoteNameList.getValue().size();
+            return mNoteNameListLiveData.getValue().size();
         }
     }
 
     String getNoteAtPosition(int position) {
-        return Objects.requireNonNull(mNoteNameList.getValue()).get(position);
+        return Objects.requireNonNull(mNoteNameListLiveData.getValue()).get(position);
     }
 
 
-    static class ViewHolder extends RecyclerView.ViewHolder
+    protected static class ViewHolder extends RecyclerView.ViewHolder
             implements View.OnCreateContextMenuListener {
 
-        private final ListItemBinding binding;
+        private final ListItemBinding mBinding;
 
         ViewHolder(ListItemBinding binding) {
             super(binding.getRoot());
-            this.binding = binding;
+            mBinding = binding;
         }
 
         @Override
@@ -85,13 +92,13 @@ public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewH
         }
 
         void bind(String string) {
-            binding.textView.setText(string);
-            binding.textView.setOnCreateContextMenuListener(this);
+            mBinding.textView.setText(string);
+            mBinding.textView.setOnCreateContextMenuListener(this);
         }
     }
 
 
-    static class DiffCallback extends DiffUtil.ItemCallback<String> {
+    private static class DiffCallback extends DiffUtil.ItemCallback<String> {
 
         @Override
         public boolean areItemsTheSame(@NonNull String oldItem, @NonNull String newItem) {

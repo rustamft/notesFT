@@ -2,13 +2,6 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <data>
-
-        <variable
-            name="fragment"
-            type="com.rustamft.notesft.presentation.screen.permission.PermissionFragment" />
-    </data>
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -18,7 +11,6 @@
             android:id="@+id/button_permission"
             style="@style/Button"
             android:layout_gravity="center"
-            android:onClick="@{() -> fragment.chooseWorkingDir()}"
             android:text="@string/choose_directory"
             android:theme="@style/Button" />
 

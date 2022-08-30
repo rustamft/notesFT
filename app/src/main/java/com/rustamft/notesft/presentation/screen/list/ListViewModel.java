@@ -12,6 +12,7 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.navigation.NavController;
@@ -34,6 +35,7 @@ import java.util.Objects;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
@@ -44,10 +46,10 @@ public class ListViewModel extends ViewModel {
     private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
-    private final MutableLiveData<AppPreferences> mAppPreferences = new MutableLiveData<>(
+    private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>(
             new AppPreferences()
     );
-    private final MutableLiveData<List<String>> mNoteNameList = new MutableLiveData<>(
+    private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>(
             new ArrayList<>()
     );
 
@@ -62,15 +64,24 @@ public class ListViewModel extends ViewModel {
         mNoteRepository = noteRepository;
         mPermissionChecker = permissionChecker;
         mToastDisplay = toastDisplay;
-        mDisposables.add(
-                mAppPreferencesRepository.getAppPreferences().subscribe(mAppPreferences::postValue)
-        );
     }
 
     @Override
     protected void onCleared() {
         mDisposables.clear();
         super.onCleared();
+    }
+
+    public PermissionChecker getPermissionChecker() {
+        return mPermissionChecker;
+    }
+
+    public LiveData<AppPreferences> getAppPreferencesLiveData() {
+        return mAppPreferencesLiveData;
+    }
+
+    public LiveData<List<String>> getNoteNameListLiveData() {
+        return mNoteNameListLiveData;
     }
 
     public void navigateNext(View view, String noteName) {
@@ -89,13 +100,15 @@ public class ListViewModel extends ViewModel {
         final Context context = view.getContext();
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
+        final AppPreferences appPreferences =
+                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_new)
                 .setView(dialogView)
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 editText.getText().toString(),
-                                Objects.requireNonNull(mAppPreferences.getValue()).workingDir
+                                appPreferences.workingDir
                         ).subscribe(
                                 note -> {
                                     if (note.exists()) {
@@ -121,15 +134,18 @@ public class ListViewModel extends ViewModel {
     }
 
     public void promptDeletion(Context context, int noteIndex) {
-        String noteName = Objects.requireNonNull(mNoteNameList.getValue()).get(noteIndex);
-        String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
+        final List<String> noteNameList = Objects.requireNonNull(mNoteNameListLiveData.getValue());
+        final String noteName = noteNameList.get(noteIndex);
+        final String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
+        final AppPreferences appPreferences =
+                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
         new AlertDialog.Builder(context)
                 .setTitle(R.string.please_confirm)
                 .setMessage(message)
                 .setPositiveButton(R.string.action_yes, (dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 noteName,
-                                Objects.requireNonNull(mAppPreferences.getValue()).workingDir
+                                appPreferences.workingDir
                         ).subscribe(
                                 this::deleteNote,
                                 error -> mToastDisplay.showLong(error.getMessage())
@@ -139,29 +155,41 @@ public class ListViewModel extends ViewModel {
                 .show();
     }
 
-    protected boolean hasWorkingDirPermission() {
-        return mPermissionChecker.hasWorkingDirPermission(
-                Objects.requireNonNull(mAppPreferences.getValue()).workingDir
-        );
-    }
-
-    MutableLiveData<List<String>> getNoteNameList() {
-        return mNoteNameList;
+    protected void updateAppPreferences(View view) {
+        final AppPreferences currentAppPreferences =
+                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
+        if (currentAppPreferences.workingDir.isEmpty()) {
+            mDisposables.add(
+                    mAppPreferencesRepository.getAppPreferences()
+                            .subscribeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    appPreferences -> {
+                                        mAppPreferencesLiveData.setValue(appPreferences);
+                                        checkWorkingDirPermission(view);
+                                        updateNoteNameList();
+                                    },
+                                    error -> mToastDisplay.showLong(error.getMessage())
+                            )
+            );
+        }
     }
 
     protected void updateNoteNameList() {
+        final AppPreferences appPreferences =
+                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
+        if (appPreferences.workingDir.isEmpty()) return; // TODO: gives null reference exception somehow
         mDisposables.add(
-                mNoteRepository.getNoteNameList(
-                        Objects.requireNonNull(mAppPreferences.getValue()).workingDir
-                ).subscribe(
-                        mNoteNameList::postValue,
+                mNoteRepository.getNoteNameList(appPreferences.workingDir).subscribe(
+                        mNoteNameListLiveData::postValue,
                         error -> mToastDisplay.showLong(error.getMessage())
                 )
         );
     }
 
     protected int getNightMode() {
-        return Objects.requireNonNull(mAppPreferences.getValue()).nightMode;
+        final AppPreferences appPreferences =
+                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
+        return appPreferences.nightMode;
     }
 
     protected void switchNightMode() {
@@ -171,13 +199,13 @@ public class ListViewModel extends ViewModel {
         } else {
             nightMode = AppCompatDelegate.MODE_NIGHT_NO;
         }
-        AppPreferences appPreferences = Objects.requireNonNull(mAppPreferences.getValue());
+        AppPreferences appPreferences = Objects.requireNonNull(mAppPreferencesLiveData.getValue());
         if (appPreferences.workingDir.isEmpty()) {
             mToastDisplay.showLong(R.string.something_went_wrong);
             return;
         }
         AppPreferences.CopyBuilder appPreferencesCopyBuilder =
-                mAppPreferences.getValue().copyBuilder();
+                mAppPreferencesLiveData.getValue().copyBuilder();
         appPreferencesCopyBuilder.setNightMode(nightMode);
         AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
         mDisposables.add(
@@ -215,6 +243,14 @@ public class ListViewModel extends ViewModel {
         rotate.setDuration(500);
         rotate.setInterpolator(new LinearInterpolator());
         view.startAnimation(rotate);
+    }
+
+    private void checkWorkingDirPermission(View view) {
+        final AppPreferences appPreferences =
+                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
+        if (!mPermissionChecker.hasWorkingDirPermission(appPreferences.workingDir)) {
+            navigateBack(view);
+        }
     }
 
     private void navigateBackToWorkingDirChoosing(View view) {
