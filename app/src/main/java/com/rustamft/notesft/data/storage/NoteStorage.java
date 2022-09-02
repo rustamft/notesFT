@@ -2,19 +2,20 @@ package com.rustamft.notesft.data.storage;
 
 import com.rustamft.notesft.data.model.NoteDataModel;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
+
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 
 public interface NoteStorage {
 
-    boolean save(NoteDataModel note) throws IOException;
+    Single<Boolean> save(NoteDataModel note);
 
-    boolean delete(NoteDataModel note) throws IOException;
+    Single<Boolean> delete(NoteDataModel note);
 
-    NoteDataModel rename(NoteDataModel note, String newName) throws FileNotFoundException;
+    Single<NoteDataModel> rename(NoteDataModel note, String newName);
 
-    NoteDataModel get(String noteName, String workingDir) throws NullPointerException;
+    Single<NoteDataModel> get(String noteName, String workingDir);
 
-    List<String> getNameList(String workingDir) throws NullPointerException;
+    Observable<List<String>> getNameList(String workingDir);
 }

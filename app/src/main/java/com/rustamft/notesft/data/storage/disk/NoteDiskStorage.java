@@ -18,9 +18,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 
 public class NoteDiskStorage implements NoteStorage {
 
@@ -31,89 +34,113 @@ public class NoteDiskStorage implements NoteStorage {
     }
 
     @Override
-    public boolean save(NoteDataModel note) throws IOException {
-        if (note.file().exists()) {
-            writeIntoExisting(note);
-        } else {
-            writeIntoNew(note);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean delete(NoteDataModel note) throws IOException {
-        DocumentFile file = note.file();
-        if (file != null) {
-            file.delete();
-        } else {
-            throw new IOException("File is null");
-        }
-        return true;
-    }
-
-    @Override
-    public NoteDataModel rename(NoteDataModel note, String newName) throws FileNotFoundException {
-        DocumentFile oldNameFile = note.file();
-        DocumentFile newNameFile = buildDocumentFile( // Create a virtual file with entered name
-                note.workingDir,
-                newName
-        );
-        if (newNameFile == null || newNameFile.exists()) {
-            throw new FileNotFoundException("New file already exists or couldn't be instantiated");
-        }
-        Uri renamedFileUri = DocumentsContract.renameDocument(
-                mContext.getContentResolver(),
-                oldNameFile.getUri(),
-                newName
-        );
-        newNameFile = DocumentFile.fromSingleUri(
-                mContext,
-                renamedFileUri
-        );
-        if (newNameFile == null || !newNameFile.exists()) {
-            throw new FileNotFoundException("Renamed file is absent or couldn't be instantiated");
-        }
-        return new NoteDataModel( // The note now is a new file instance, actualise note
-                newName,
-                note.text,
-                note.workingDir,
-                newNameFile
+    public Single<Boolean> save(NoteDataModel note) {
+        return Single.create(emitter -> {
+                    if (note.file().exists()) {
+                        writeIntoExisting(note);
+                    } else {
+                        writeIntoNew(note);
+                    }
+                    if (!emitter.isDisposed()) {
+                        emitter.onSuccess(true);
+                    }
+                }
         );
     }
 
     @Override
-    public NoteDataModel get(String noteName, String workingDir) throws NullPointerException {
-        DocumentFile file = buildDocumentFile(workingDir, noteName);
-        String text;
-        if (file.exists()) {
-            text = buildStringFromContent(file);
-        } else {
-            text = "";
-        }
-        return new NoteDataModel(
-                noteName,
-                text,
-                workingDir,
-                file
-        );
-    }
-
-    @Override
-    public List<String> getNameList(String workingDir) throws NullPointerException {
-        List<String> filesList = new ArrayList<>();
-        String name, mime;
-        Cursor cursor = buildCursor(buildChildrenUri(workingDir));
-        while (cursor.moveToNext()) {
-            name = cursor.getString(0);
-            mime = cursor.getString(1);
-            // Add the name to the set, if it's a file, not a dir
-            if (!(DocumentsContract.Document.MIME_TYPE_DIR.equals(mime))) {
-                filesList.add(name);
+    public Single<Boolean> delete(NoteDataModel note) {
+        return Single.create(emitter -> {
+            DocumentFile file = note.file();
+            if (!emitter.isDisposed()) {
+                if (file != null) {
+                    emitter.onSuccess(file.delete());
+                } else {
+                    emitter.onError(new IOException("File is null"));
+                }
             }
-        }
-        cursor.close();
-        Collections.sort(filesList);
-        return filesList;
+        });
+    }
+
+    @Override
+    public Single<NoteDataModel> rename(NoteDataModel note, String newName) {
+        return Single.create(emitter -> {
+            DocumentFile oldNameFile = note.file();
+            DocumentFile newNameFile = buildDocumentFile( // Create a virtual file with entered name
+                    note.workingDir,
+                    newName
+            );
+            if (!emitter.isDisposed() && (newNameFile == null || newNameFile.exists())) {
+                emitter.onError(
+                        new FileNotFoundException(
+                                "New file already exists or couldn't be instantiated"
+                        )
+                );
+            }
+            Uri renamedFileUri = DocumentsContract.renameDocument(
+                    mContext.getContentResolver(),
+                    oldNameFile.getUri(),
+                    newName
+            );
+            newNameFile = DocumentFile.fromSingleUri(
+                    mContext,
+                    renamedFileUri
+            );
+            if (!emitter.isDisposed() && (newNameFile == null || !newNameFile.exists())) {
+                emitter.onError(
+                        new FileNotFoundException(
+                                "Renamed file is absent or couldn't be instantiated"
+                        )
+                );
+            }
+            if (!emitter.isDisposed()) {
+                emitter.onSuccess(
+                        new NoteDataModel(
+                                newName,
+                                note.text,
+                                note.workingDir,
+                                newNameFile
+                        )
+                );
+            }
+        });
+    }
+
+    @Override
+    public Single<NoteDataModel> get(String noteName, String workingDir) {
+        return Single.create(emitter -> {
+            DocumentFile file = buildDocumentFile(workingDir, noteName);
+            String text;
+            if (file.exists()) {
+                text = buildStringFromContent(file);
+            } else {
+                text = "";
+            }
+            if (!emitter.isDisposed()) {
+                emitter.onSuccess(
+                        new NoteDataModel(
+                                noteName,
+                                text,
+                                workingDir,
+                                file
+                        )
+                );
+            }
+        });
+    }
+
+    @Override
+    public Observable<List<String>> getNameList(String workingDir) {
+        return Observable.interval(1, TimeUnit.SECONDS)
+                .flatMap(aLong -> {
+                    List<String> fileList = new ArrayList<>();
+                    Cursor cursor = buildFilteredSortedCursor(buildChildrenUri(workingDir));
+                    while (cursor.moveToNext()) {
+                        fileList.add(cursor.getString(0));
+                    }
+                    cursor.close();
+                    return Observable.just(fileList);
+                });
     }
 
     private DocumentFile buildDocumentFile(String workingDir, String name) {
@@ -154,16 +181,17 @@ public class NoteDiskStorage implements NoteStorage {
         );
     }
 
-    private Cursor buildCursor(Uri childrenUri) {
+    private Cursor buildFilteredSortedCursor(Uri uri) {
+        String[] projection = new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME};
+        String selection = DocumentsContract.Document.COLUMN_MIME_TYPE + "!=" +
+                DocumentsContract.Document.MIME_TYPE_DIR;
+        String sortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " " + "ASC";
         return mContext.getContentResolver().query(
-                childrenUri,
-                new String[]{
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                        DocumentsContract.Document.COLUMN_MIME_TYPE
-                },
+                uri,
+                projection,
+                selection,
                 null,
-                null,
-                null
+                sortOrder
         );
     }
 

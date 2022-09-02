@@ -53,6 +53,17 @@ public class ListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        mViewModel.getAppPreferencesLiveData().observe( // Wait for app prefs to set up
+                getViewLifecycleOwner(),
+                appPreferences -> {
+                    setNightMode(appPreferences.nightMode);
+                    if (!mViewModel.getPermissionChecker().hasWorkingDirPermission(
+                            appPreferences.workingDir
+                    )) {
+                        mViewModel.navigateBack(requireView());
+                    }
+                }
+        );
         requireActivity().addMenuProvider(
                 new ListMenuProvider(),
                 getViewLifecycleOwner(),
@@ -65,24 +76,7 @@ public class ListFragment extends Fragment {
                         mViewModel,
                         mViewModel.getNoteNameListLiveData())
         );
-        switch (mViewModel.getNightMode()) { // To fix IDE complains about non-constant value
-            case AppCompatDelegate.MODE_NIGHT_YES:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                break;
-            case AppCompatDelegate.MODE_NIGHT_NO:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                break;
-            default:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
-                break;
-        }
         registerForContextMenu(mBinding.recyclerviewList);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mViewModel.updateAppPreferences(requireView());
     }
 
     @Override
@@ -101,6 +95,20 @@ public class ListFragment extends Fragment {
         mBinding = null;
     }
 
+    private void setNightMode(int nightMode) {
+        switch (nightMode) { // To fix IDE complains about non-constant value
+            case AppCompatDelegate.MODE_NIGHT_YES:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case AppCompatDelegate.MODE_NIGHT_NO:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            default:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
+                break;
+        }
+    }
+
     private class ListMenuProvider implements MenuProvider {
 
         @Override
@@ -110,16 +118,10 @@ public class ListFragment extends Fragment {
 
         @Override
         public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-            final int ACTION_REFRESH_ID = R.id.action_refresh;
             final int ACTION_CHOOSE_DIR_ID = R.id.action_choose_dir;
             final int ACTION_SWITCH_DARK_ID = R.id.action_switch_night;
             final int ACTION_ABOUT_APP_ID = R.id.action_about_app;
             switch (menuItem.getItemId()) {
-                case ACTION_REFRESH_ID:
-                    View refreshAction = requireActivity().findViewById(R.id.action_refresh);
-                    mViewModel.animateRotation(refreshAction);
-                    mViewModel.updateNoteNameList();
-                    return true;
                 case ACTION_CHOOSE_DIR_ID:
                     mViewModel.promptNavigateBack(requireView());
                     return true;

@@ -7,7 +7,7 @@ import com.rustamft.notesft.domain.repository.NoteRepository;
 
 import java.util.List;
 
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -20,53 +20,32 @@ public class NoteRepositoryImpl implements NoteRepository {
     }
 
     public Single<Boolean> saveNote(Note note) {
-        return Single.fromCallable(
-                        () -> mNoteStorage.save(
-                                convertForData(note)
-                        )
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        return mNoteStorage.save(convertForData(note))
+                .subscribeOn(Schedulers.io());
     }
 
     public Single<Boolean> deleteNote(Note note) {
-        return Single.fromCallable(
-                        () -> mNoteStorage.delete(
-                                convertForData(note)
-                        )
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        return mNoteStorage.delete(convertForData(note))
+                .subscribeOn(Schedulers.io());
     }
 
     public Single<Note> renameNote(Note note, String newName) {
-        return Single.fromCallable(
-                        () -> mNoteStorage.rename(
-                                convertForData(note),
-                                newName
-                        )
+        return mNoteStorage.rename(
+                        convertForData(note),
+                        newName
                 )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .map(this::convertForDomain);
+                .map(this::convertForDomain)
+                .subscribeOn(Schedulers.io());
     }
 
     public Single<Note> getNote(String noteName, String workingDir) {
-        return Single.fromCallable(
-                        () -> convertForDomain(
-                                mNoteStorage.get(noteName, workingDir)
-                        )
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        return mNoteStorage.get(noteName, workingDir)
+                .map(this::convertForDomain)
+                .subscribeOn(Schedulers.io());
     }
 
-    public Single<List<String>> getNoteNameList(String workingDir) {
-        return Single.fromCallable(
-                        () -> mNoteStorage.getNameList(workingDir)
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+    public Observable<List<String>> getNoteNameList(String workingDir) {
+        return mNoteStorage.getNameList(workingDir).subscribeOn(Schedulers.io());
     }
 
     private NoteDataModel convertForData(Note note) {

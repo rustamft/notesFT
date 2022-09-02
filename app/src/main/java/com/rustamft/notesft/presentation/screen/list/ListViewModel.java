@@ -5,9 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
@@ -46,9 +43,8 @@ public class ListViewModel extends ViewModel {
     private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
-    private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>(
-            new AppPreferences()
-    );
+    // TODO: rewrite AppPreferences repo and storage, fix nullability
+    private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>(
             new ArrayList<>()
     );
@@ -64,6 +60,31 @@ public class ListViewModel extends ViewModel {
         mNoteRepository = noteRepository;
         mPermissionChecker = permissionChecker;
         mToastDisplay = toastDisplay;
+        mDisposables.add(
+                mAppPreferencesRepository.getAppPreferences()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                appPreferences -> {
+                                    if (mPermissionChecker.hasWorkingDirPermission(
+                                            appPreferences.workingDir
+                                    )) {
+                                        mDisposables.add(
+                                                mNoteRepository.getNoteNameList(
+                                                                appPreferences.workingDir
+                                                        )
+                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                        .subscribe(
+                                                                mNoteNameListLiveData::postValue,
+                                                                error -> mToastDisplay.showLong(
+                                                                        error.getMessage()
+                                                                )
+                                                        )
+                                        );
+                                    }
+                                },
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
+        );
     }
 
     @Override
@@ -100,15 +121,13 @@ public class ListViewModel extends ViewModel {
         final Context context = view.getContext();
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
-        final AppPreferences appPreferences =
-                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_new)
                 .setView(dialogView)
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
                                 editText.getText().toString(),
-                                appPreferences.workingDir
+                                mAppPreferencesLiveData.getValue().workingDir
                         ).subscribe(
                                 note -> {
                                     if (note.exists()) {
@@ -155,43 +174,6 @@ public class ListViewModel extends ViewModel {
                 .show();
     }
 
-    protected void updateAppPreferences(View view) {
-        final AppPreferences currentAppPreferences =
-                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
-        if (currentAppPreferences.workingDir.isEmpty()) {
-            mDisposables.add(
-                    mAppPreferencesRepository.getAppPreferences()
-                            .subscribeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    appPreferences -> {
-                                        mAppPreferencesLiveData.setValue(appPreferences);
-                                        checkWorkingDirPermission(view);
-                                        updateNoteNameList();
-                                    },
-                                    error -> mToastDisplay.showLong(error.getMessage())
-                            )
-            );
-        }
-    }
-
-    protected void updateNoteNameList() {
-        final AppPreferences appPreferences =
-                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
-        if (appPreferences.workingDir.isEmpty()) return; // TODO: gives null reference exception somehow
-        mDisposables.add(
-                mNoteRepository.getNoteNameList(appPreferences.workingDir).subscribe(
-                        mNoteNameListLiveData::postValue,
-                        error -> mToastDisplay.showLong(error.getMessage())
-                )
-        );
-    }
-
-    protected int getNightMode() {
-        final AppPreferences appPreferences =
-                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
-        return appPreferences.nightMode;
-    }
-
     protected void switchNightMode() {
         int nightMode = AppCompatDelegate.getDefaultNightMode();
         if (nightMode != AppCompatDelegate.MODE_NIGHT_YES) {
@@ -236,23 +218,6 @@ public class ListViewModel extends ViewModel {
         builder.show();
     }
 
-    protected void animateRotation(View view) {
-        RotateAnimation rotate = new RotateAnimation(0, 360,
-                Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF, 0.5f);
-        rotate.setDuration(500);
-        rotate.setInterpolator(new LinearInterpolator());
-        view.startAnimation(rotate);
-    }
-
-    private void checkWorkingDirPermission(View view) {
-        final AppPreferences appPreferences =
-                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
-        if (!mPermissionChecker.hasWorkingDirPermission(appPreferences.workingDir)) {
-            navigateBack(view);
-        }
-    }
-
     private void navigateBackToWorkingDirChoosing(View view) {
         NavController navController = Navigation.findNavController(view);
         Bundle bundle = new Bundle();
@@ -272,10 +237,7 @@ public class ListViewModel extends ViewModel {
     private void deleteNote(Note note) {
         mDisposables.add(
                 mNoteRepository.deleteNote(note).subscribe(
-                        success -> {
-                            updateNoteNameList();
-                            mToastDisplay.showShort(R.string.note_deleted);
-                        },
+                        success -> mToastDisplay.showShort(R.string.note_deleted),
                         error -> mToastDisplay.showLong(error.getMessage())
                 )
         );

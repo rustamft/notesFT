@@ -5,12 +5,6 @@
     tools:context="com.example.notesft.screens.list.ListFragment">
 
     <item
-        android:id="@+id/action_refresh"
-        android:icon="@drawable/ic_refresh"
-        android:orderInCategory="1"
-        android:title="@string/action_refresh"
-        app:showAsAction="ifRoom" />
-    <item
         android:id="@+id/action_choose_dir"
         android:icon="@drawable/ic_folder"
         android:orderInCategory="2"
