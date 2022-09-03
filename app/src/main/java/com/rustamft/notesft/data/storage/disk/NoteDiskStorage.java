@@ -131,15 +131,22 @@ public class NoteDiskStorage implements NoteStorage {
 
     @Override
     public Observable<List<String>> getNameList(String workingDir) {
+        List<String> fileList = new ArrayList<>();
         return Observable.interval(1, TimeUnit.SECONDS)
                 .flatMap(aLong -> {
-                    List<String> fileList = new ArrayList<>();
-                    Cursor cursor = buildFilteredSortedCursor(buildChildrenUri(workingDir));
-                    while (cursor.moveToNext()) {
-                        fileList.add(cursor.getString(0));
+                    List<String> newFileList = new ArrayList<>();
+                    Cursor newCursor = buildFilteredSortedCursor(buildChildrenUri(workingDir));
+                    while (newCursor.moveToNext()) {
+                        newFileList.add(newCursor.getString(0));
                     }
-                    cursor.close();
-                    return Observable.just(fileList);
+                    newCursor.close();
+                    if (fileList.equals(newFileList)) {
+                        return Observable.empty();
+                    } else {
+                        fileList.clear();
+                        fileList.addAll(newFileList);
+                        return Observable.just(newFileList);
+                    }
                 });
     }
 
@@ -183,7 +190,7 @@ public class NoteDiskStorage implements NoteStorage {
 
     private Cursor buildFilteredSortedCursor(Uri uri) {
         String[] projection = new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME};
-        String selection = DocumentsContract.Document.COLUMN_MIME_TYPE + "!=" +
+        String selection = DocumentsContract.Document.COLUMN_MIME_TYPE + " != " + // TODO: doesn't filter dirs
                 DocumentsContract.Document.MIME_TYPE_DIR;
         String sortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " " + "ASC";
         return mContext.getContentResolver().query(

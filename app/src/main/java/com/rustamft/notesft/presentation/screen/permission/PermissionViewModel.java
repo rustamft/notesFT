@@ -13,19 +13,18 @@ import androidx.navigation.Navigation;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
-import com.rustamft.notesft.domain.util.PermissionChecker;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
 public class PermissionViewModel extends ViewModel {
 
     private final AppPreferencesRepository mAppPreferencesRepository;
-    private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferences = new MutableLiveData<>();
@@ -33,14 +32,13 @@ public class PermissionViewModel extends ViewModel {
     @Inject
     PermissionViewModel(
             AppPreferencesRepository appPreferencesRepository,
-            PermissionChecker permissionChecker,
             ToastDisplay toastDisplay
     ) {
         mAppPreferencesRepository = appPreferencesRepository;
-        mPermissionChecker = permissionChecker;
         mToastDisplay = toastDisplay;
         mDisposables.add(
-                mAppPreferencesRepository.getAppPreferences().subscribe(mAppPreferences::postValue)
+                mAppPreferencesRepository.getAppPreferences()
+                        .subscribe(mAppPreferences::postValue)
         );
     }
 
@@ -60,13 +58,15 @@ public class PermissionViewModel extends ViewModel {
         appPreferencesCopyBuilder.setWorkingDir(workingDirUri.toString());
         mDisposables.add(
                 mAppPreferencesRepository.saveAppPreferences(
-                        appPreferencesCopyBuilder.build()
-                ).subscribe(
-                        success -> {
-                            if (success) navigateNext(view);
-                        },
-                        error -> mToastDisplay.showLong(error.getMessage())
-                )
+                                appPreferencesCopyBuilder.build()
+                        )
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                success -> {
+                                    if (success) navigateNext(view);
+                                },
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
         );
     }
 

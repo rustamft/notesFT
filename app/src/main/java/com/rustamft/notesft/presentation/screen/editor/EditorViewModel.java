@@ -5,10 +5,8 @@ import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
@@ -24,12 +22,12 @@ import com.rustamft.notesft.domain.util.Constants;
 import com.rustamft.notesft.domain.util.DateTimeStringBuilder;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 import com.rustamft.notesft.presentation.activity.MainActivity;
-
-import java.util.Objects;
+import com.rustamft.notesft.presentation.model.ObservableNote;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
@@ -40,7 +38,7 @@ public class EditorViewModel extends ViewModel {
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
     private androidx.lifecycle.Observer<String> mActionBarTitleObserver; // TODO: change the approach
-    private final MutableLiveData<Note> mNoteLiveData = new MutableLiveData<>(new Note());
+    public ObservableNote observableNote = new ObservableNote();
 
     @Inject
     public EditorViewModel(
@@ -55,18 +53,17 @@ public class EditorViewModel extends ViewModel {
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
             mDisposables.add(
-                    appPreferencesRepository.getAppPreferences().subscribe(
-                            appPreferences -> mDisposables.add(
-                                    mNoteRepository.getNote(
-                                            noteName,
-                                            appPreferences.workingDir
-                                    ).subscribe(
-                                            mNoteLiveData::postValue,
-                                            error -> mToastDisplay.showLong(error.getMessage())
-                                    )
-                            ),
-                            error -> mToastDisplay.showLong(error.getMessage())
-                    )
+                    appPreferencesRepository.getAppPreferences()
+                            .firstOrError()
+                            .flatMap(appPreferences -> mNoteRepository.getNote(
+                                    noteName,
+                                    appPreferences.workingDir
+                            ))
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    note -> observableNote.note.set(note),
+                                    error -> mToastDisplay.showLong(error.getMessage())
+                            )
             );
         }
     }
@@ -75,10 +72,6 @@ public class EditorViewModel extends ViewModel {
     protected void onCleared() {
         mDisposables.clear();
         super.onCleared();
-    }
-
-    public LiveData<Note> getNoteLiveData() {
-        return mNoteLiveData;
     }
 
     /**
@@ -92,16 +85,19 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void onNoteSave(View view, EditText editText) {
-        final Note note = Objects.requireNonNull(mNoteLiveData.getValue());
+        final Note note = observableNote.note.get();
+        if (note == null) return;
         final Note.CopyBuilder noteCopyBuilder = note.copyBuilder();
         noteCopyBuilder.setText(editText.getText().toString());
         mDisposables.add(
                 mNoteRepository.saveNote(
-                        noteCopyBuilder.build()
-                ).subscribe(
-                        success -> navigateBack(view),
-                        error -> mToastDisplay.showLong(error.getMessage())
-                )
+                                noteCopyBuilder.build()
+                        )
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                success -> navigateBack(view),
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
         );
     }
 
@@ -112,36 +108,40 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void promptRename(View view) {
+        final Note note = observableNote.note.get();
+        if (note == null) return;
         final Context context = view.getContext();
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
-        final Note note = Objects.requireNonNull(mNoteLiveData.getValue());
         editText.setText(note.name);
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_rename)
                 .setView(dialogView)
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
                         mNoteRepository.renameNote(
-                                mNoteLiveData.getValue(),
-                                editText.getText().toString()
-                        ).subscribe(
-                                resultNote -> {
-                                    mNoteLiveData.postValue(resultNote);
-                                    mActionBarTitle.postValue(resultNote.name);
-                                },
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
+                                        note,
+                                        editText.getText().toString()
+                                )
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                        resultNote -> {
+                                            observableNote.note.set(resultNote);
+                                            mActionBarTitle.postValue(resultNote.name);
+                                        },
+                                        error -> mToastDisplay.showLong(error.getMessage())
+                                )
                 )))
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> { /* Cancel */ }))
                 .show();
     }
 
     public void displayAboutNote(Context context) {
-        final Note note = Objects.requireNonNull(mNoteLiveData.getValue());
+        final Note note = observableNote.note.get();
+        if (note == null) return;
         String size = context.getString(R.string.about_note_file_size) + note.length() +
                 context.getString(R.string.about_note_byte);
         String lastModified = context.getString(R.string.about_note_last_modified) +
-                DateTimeStringBuilder.millisToString(mNoteLiveData.getValue().lastModified());
+                DateTimeStringBuilder.millisToString(note.lastModified());
         String path = context.getString(R.string.about_note_file_path) + note.path();
         String message = size + "\n\n" + lastModified + "\n\n" + path;
         new AlertDialog.Builder(context)

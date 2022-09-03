@@ -71,7 +71,7 @@ public class ListFragment extends Fragment {
         );
         mBinding.setViewModel(mViewModel);
         mBinding.setAdapter(
-                new NotesListAdapter(
+                new NoteListAdapter(
                         this.getViewLifecycleOwner(),
                         mViewModel,
                         mViewModel.getNoteNameListLiveData())

@@ -11,7 +11,7 @@
 
         <variable
             name="adapter"
-            type="com.rustamft.notesft.presentation.screen.list.NotesListAdapter" />
+            type="com.rustamft.notesft.presentation.screen.list.NoteListAdapter" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

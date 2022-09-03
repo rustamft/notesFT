@@ -21,7 +21,7 @@ public class Note {
         mFile = file;
     }
 
-    public Note() {
+    public Note() { // TODO: remove
         this.name = "";
         this.text = "";
         this.workingDir = "";

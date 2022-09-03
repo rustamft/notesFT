@@ -25,9 +25,7 @@ import com.rustamft.notesft.domain.util.Constants;
 import com.rustamft.notesft.domain.util.PermissionChecker;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -43,11 +41,8 @@ public class ListViewModel extends ViewModel {
     private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
-    // TODO: rewrite AppPreferences repo and storage, fix nullability
     private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
-    private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>(
-            new ArrayList<>()
-    );
+    private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>();
 
     @Inject
     ListViewModel(
@@ -62,26 +57,13 @@ public class ListViewModel extends ViewModel {
         mToastDisplay = toastDisplay;
         mDisposables.add(
                 mAppPreferencesRepository.getAppPreferences()
+                        .flatMap(appPreferences -> {
+                            mAppPreferencesLiveData.postValue(appPreferences);
+                            return mNoteRepository.getNoteNameList(appPreferences.workingDir);
+                        })
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                appPreferences -> {
-                                    if (mPermissionChecker.hasWorkingDirPermission(
-                                            appPreferences.workingDir
-                                    )) {
-                                        mDisposables.add(
-                                                mNoteRepository.getNoteNameList(
-                                                                appPreferences.workingDir
-                                                        )
-                                                        .observeOn(AndroidSchedulers.mainThread())
-                                                        .subscribe(
-                                                                mNoteNameListLiveData::postValue,
-                                                                error -> mToastDisplay.showLong(
-                                                                        error.getMessage()
-                                                                )
-                                                        )
-                                        );
-                                    }
-                                },
+                                mNoteNameListLiveData::postValue,
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
@@ -118,6 +100,7 @@ public class ListViewModel extends ViewModel {
     }
 
     public void promptCreation(View view) {
+        if (mAppPreferencesLiveData.getValue() == null) return;
         final Context context = view.getContext();
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
@@ -126,18 +109,20 @@ public class ListViewModel extends ViewModel {
                 .setView(dialogView)
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
-                                editText.getText().toString(),
-                                mAppPreferencesLiveData.getValue().workingDir
-                        ).subscribe(
-                                note -> {
-                                    if (note.exists()) {
-                                        mToastDisplay.showShort(R.string.note_same_name_exists);
-                                    } else {
-                                        createNote(view, note);
-                                    }
-                                },
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
+                                        editText.getText().toString(),
+                                        mAppPreferencesLiveData.getValue().workingDir
+                                )
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                        note -> {
+                                            if (note.exists()) {
+                                                mToastDisplay.showShort(R.string.note_same_name_exists);
+                                            } else {
+                                                createNote(view, note);
+                                            }
+                                        },
+                                        error -> mToastDisplay.showLong(error.getMessage())
+                                )
                 )))
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> { /* Cancel */ }))
                 .show();
@@ -153,36 +138,38 @@ public class ListViewModel extends ViewModel {
     }
 
     public void promptDeletion(Context context, int noteIndex) {
-        final List<String> noteNameList = Objects.requireNonNull(mNoteNameListLiveData.getValue());
+        if (mAppPreferencesLiveData.getValue() == null ||
+                mNoteNameListLiveData.getValue() == null) return;
+        final List<String> noteNameList = mNoteNameListLiveData.getValue();
         final String noteName = noteNameList.get(noteIndex);
         final String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
-        final AppPreferences appPreferences =
-                Objects.requireNonNull(mAppPreferencesLiveData.getValue());
         new AlertDialog.Builder(context)
                 .setTitle(R.string.please_confirm)
                 .setMessage(message)
                 .setPositiveButton(R.string.action_yes, (dialog, which) -> mDisposables.add(
                         mNoteRepository.getNote(
-                                noteName,
-                                appPreferences.workingDir
-                        ).subscribe(
-                                this::deleteNote,
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
+                                        noteName,
+                                        mAppPreferencesLiveData.getValue().workingDir
+                                )
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                        this::deleteNote,
+                                        error -> mToastDisplay.showLong(error.getMessage())
+                                )
                 ))
                 .setNegativeButton(R.string.action_no, (dialog, which) -> { /* Cancel */ })
                 .show();
     }
 
     protected void switchNightMode() {
+        if (mAppPreferencesLiveData.getValue() == null) return;
         int nightMode = AppCompatDelegate.getDefaultNightMode();
         if (nightMode != AppCompatDelegate.MODE_NIGHT_YES) {
             nightMode = AppCompatDelegate.MODE_NIGHT_YES;
         } else {
             nightMode = AppCompatDelegate.MODE_NIGHT_NO;
         }
-        AppPreferences appPreferences = Objects.requireNonNull(mAppPreferencesLiveData.getValue());
-        if (appPreferences.workingDir.isEmpty()) {
+        if (mAppPreferencesLiveData.getValue().workingDir.isEmpty()) {
             mToastDisplay.showLong(R.string.something_went_wrong);
             return;
         }
@@ -191,14 +178,16 @@ public class ListViewModel extends ViewModel {
         appPreferencesCopyBuilder.setNightMode(nightMode);
         AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
         mDisposables.add(
-                mAppPreferencesRepository.saveAppPreferences(appPreferencesCopy).subscribe(
-                        success -> {
-                            if (success) AppCompatDelegate.setDefaultNightMode(
-                                    appPreferencesCopy.nightMode
-                            );
-                        },
-                        error -> mToastDisplay.showLong(error.getMessage())
-                )
+                mAppPreferencesRepository.saveAppPreferences(appPreferencesCopy)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                success -> {
+                                    if (success) AppCompatDelegate.setDefaultNightMode(
+                                            appPreferencesCopy.nightMode
+                                    );
+                                },
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
         );
     }
 
@@ -227,19 +216,23 @@ public class ListViewModel extends ViewModel {
 
     private void createNote(View view, Note note) {
         mDisposables.add(
-                mNoteRepository.saveNote(note).subscribe(
-                        success -> navigateNext(view, note.name),
-                        error -> mToastDisplay.showLong(error.getMessage())
-                )
+                mNoteRepository.saveNote(note)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                success -> navigateNext(view, note.name),
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
         );
     }
 
     private void deleteNote(Note note) {
         mDisposables.add(
-                mNoteRepository.deleteNote(note).subscribe(
-                        success -> mToastDisplay.showShort(R.string.note_deleted),
-                        error -> mToastDisplay.showLong(error.getMessage())
-                )
+                mNoteRepository.deleteNote(note)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                success -> mToastDisplay.showShort(R.string.note_deleted),
+                                error -> mToastDisplay.showLong(error.getMessage())
+                        )
         );
     }
 

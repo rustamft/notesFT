@@ -5,7 +5,7 @@ import com.rustamft.notesft.data.storage.AppPreferencesStorage;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -18,23 +18,14 @@ public class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
     }
 
     public Single<Boolean> saveAppPreferences(AppPreferences appPreferences) {
-        return Single.fromCallable(
-                        () -> mAppPreferencesStorage.save(
-                                convertForData(appPreferences)
-                        )
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        return mAppPreferencesStorage.save(convertForData(appPreferences))
+                .subscribeOn(Schedulers.io());
     }
 
-    public Single<AppPreferences> getAppPreferences() {
-        return Single.fromCallable(
-                        () -> convertForDomain(
-                                mAppPreferencesStorage.get()
-                        )
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+    public Observable<AppPreferences> getAppPreferences() {
+        return mAppPreferencesStorage.get()
+                .map(this::convertForDomain)
+                .subscribeOn(Schedulers.io());
     }
 
     private AppPreferencesDataModel convertForData(AppPreferences appPreferences) {

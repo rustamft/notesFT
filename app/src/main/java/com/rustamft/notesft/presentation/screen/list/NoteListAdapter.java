@@ -18,12 +18,12 @@ import com.rustamft.notesft.databinding.ListItemBinding;
 import java.util.List;
 import java.util.Objects;
 
-public class NotesListAdapter extends ListAdapter<String, NotesListAdapter.ViewHolder> {
+public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHolder> {
 
-    private ListViewModel mViewModel; // TODO: fix, this leaks viewmodel
+    private ListViewModel mViewModel;
     private final LiveData<List<String>> mNoteNameListLiveData; // Cached copy of notes list
 
-    NotesListAdapter(
+    NoteListAdapter(
             LifecycleOwner lifecycleOwner,
             ListViewModel viewModel,
             LiveData<List<String>> noteNameListLiveData

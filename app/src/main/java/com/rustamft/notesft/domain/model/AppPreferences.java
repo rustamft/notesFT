@@ -13,7 +13,7 @@ public class AppPreferences {
         this.workingDir = workingDir;
     }
 
-    public AppPreferences() {
+    public AppPreferences() { // TODO: remove
         this.nightMode = 0;
         this.workingDir = "";
     }
