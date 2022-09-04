@@ -7,11 +7,10 @@ import com.rustamft.notesft.domain.model.Note;
 
 public class ObservableNote {
 
-    public ObservableField<Note> note = new ObservableField<>();
-    public ObservableField<String> name = new ObservableField<>("");
-    public ObservableField<String> text = new ObservableField<>("");
-    public ObservableField<Boolean> textChanged = new ObservableField<>(false);
-    // TODO: fix FAB visibility
+    public final ObservableField<Note> note = new ObservableField<>();
+    public final ObservableField<String> name = new ObservableField<>("");
+    public final ObservableField<String> text = new ObservableField<>("");
+    public final ObservableField<Boolean> textChangedByUser = new ObservableField<>(false);
 
     public ObservableNote() {
         note.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() {
@@ -31,7 +30,7 @@ public class ObservableNote {
         text.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() {
             @Override
             public void onPropertyChanged(Observable sender, int propertyId) {
-                textChanged.set(true);
+                textChangedByUser.set(true);
                 text.removeOnPropertyChangedCallback(this);
             }
         });

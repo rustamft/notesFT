@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +37,12 @@ public class NoteDiskStorage implements NoteStorage {
     @Override
     public Single<Boolean> save(NoteDataModel note) {
         return Single.create(emitter -> {
-                    if (note.file().exists()) {
-                        writeIntoExisting(note);
-                    } else {
-                        writeIntoNew(note);
-                    }
                     if (!emitter.isDisposed()) {
-                        emitter.onSuccess(true);
+                        if (note.file().exists()) {
+                            emitter.onSuccess(writeIntoExisting(note));
+                        } else {
+                            emitter.onSuccess(writeIntoNew(note));
+                        }
                     }
                 }
         );
@@ -135,12 +135,18 @@ public class NoteDiskStorage implements NoteStorage {
         return Observable.interval(1, TimeUnit.SECONDS)
                 .flatMap(aLong -> {
                     List<String> newFileList = new ArrayList<>();
-                    Cursor newCursor = buildFilteredSortedCursor(buildChildrenUri(workingDir));
+                    Cursor newCursor = buildCursor(buildChildrenUri(workingDir));
+                    String name, mime;
                     while (newCursor.moveToNext()) {
-                        newFileList.add(newCursor.getString(0));
+                        name = newCursor.getString(0);
+                        mime = newCursor.getString(1);
+                        if (!mime.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
+                            newFileList.add(name);
+                        }
                     }
                     newCursor.close();
-                    if (fileList.equals(newFileList)) {
+                    Collections.sort(newFileList);
+                    if (newFileList.equals(fileList)) {
                         return Observable.empty();
                     } else {
                         fileList.clear();
@@ -188,21 +194,20 @@ public class NoteDiskStorage implements NoteStorage {
         );
     }
 
-    private Cursor buildFilteredSortedCursor(Uri uri) {
-        String[] projection = new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME};
-        String selection = DocumentsContract.Document.COLUMN_MIME_TYPE + " != " + // TODO: doesn't filter dirs
-                DocumentsContract.Document.MIME_TYPE_DIR;
-        String sortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " " + "ASC";
+    private Cursor buildCursor(Uri uri) {
         return mContext.getContentResolver().query(
                 uri,
-                projection,
-                selection,
+                new String[]{
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE
+                },
                 null,
-                sortOrder
+                null,
+                null
         );
     }
 
-    private void writeIntoExisting(NoteDataModel note) throws IOException {
+    private boolean writeIntoExisting(NoteDataModel note) throws IOException {
         // Write the text to the file
         ParcelFileDescriptor pfd = mContext.getContentResolver().openFileDescriptor(
                 note.file().getUri(),
@@ -212,9 +217,10 @@ public class NoteDiskStorage implements NoteStorage {
         fos.write(note.text.getBytes());
         fos.close();
         pfd.close();
+        return true;
     }
 
-    private void writeIntoNew(NoteDataModel note) throws IOException {
+    private boolean writeIntoNew(NoteDataModel note) throws IOException {
         // Get a valid parent URI
         DocumentFile parentDocument = DocumentFile.fromTreeUri(
                 mContext,
@@ -234,5 +240,6 @@ public class NoteDiskStorage implements NoteStorage {
         if (noteFileUri == null) {
             throw new IOException("Note file URI is null");
         }
+        return true;
     }
 }

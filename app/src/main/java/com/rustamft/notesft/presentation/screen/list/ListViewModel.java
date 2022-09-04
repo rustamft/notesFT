@@ -31,7 +31,10 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Function;
 
 @HiltViewModel
 public class ListViewModel extends ViewModel {
@@ -107,22 +110,9 @@ public class ListViewModel extends ViewModel {
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_new)
                 .setView(dialogView)
-                .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
-                        mNoteRepository.getNote(
-                                        editText.getText().toString(),
-                                        mAppPreferencesLiveData.getValue().workingDir
-                                )
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                        note -> {
-                                            if (note.exists()) {
-                                                mToastDisplay.showShort(R.string.note_same_name_exists);
-                                            } else {
-                                                createNote(view, note);
-                                            }
-                                        },
-                                        error -> mToastDisplay.showLong(error.getMessage())
-                                )
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> createNote(
+                        view,
+                        editText.getText().toString()
                 )))
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> { /* Cancel */ }))
                 .show();
@@ -146,17 +136,7 @@ public class ListViewModel extends ViewModel {
         new AlertDialog.Builder(context)
                 .setTitle(R.string.please_confirm)
                 .setMessage(message)
-                .setPositiveButton(R.string.action_yes, (dialog, which) -> mDisposables.add(
-                        mNoteRepository.getNote(
-                                        noteName,
-                                        mAppPreferencesLiveData.getValue().workingDir
-                                )
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(
-                                        this::deleteNote,
-                                        error -> mToastDisplay.showLong(error.getMessage())
-                                )
-                ))
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> deleteNote(noteName))
                 .setNegativeButton(R.string.action_no, (dialog, which) -> { /* Cancel */ })
                 .show();
     }
@@ -214,20 +194,40 @@ public class ListViewModel extends ViewModel {
         navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
     }
 
-    private void createNote(View view, Note note) {
+    private void createNote(View view, String noteName) { // TODO: view mParent leak, maybe this
+        if (mAppPreferencesLiveData.getValue() == null) return;
         mDisposables.add(
-                mNoteRepository.saveNote(note)
+                mNoteRepository.getNote(
+                                noteName,
+                                mAppPreferencesLiveData.getValue().workingDir
+                        )
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .flatMap((Function<Note, SingleSource<Boolean>>) note -> {
+                            if (note.exists()) {
+                                mToastDisplay.showShort(R.string.note_same_name_exists);
+                                return Single.just(false);
+                            } else {
+                                return mNoteRepository.saveNote(note);
+                            }
+                        })
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> navigateNext(view, note.name),
+                                success -> {
+                                    if (success) navigateNext(view, noteName);
+                                },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
     }
 
-    private void deleteNote(Note note) {
+    private void deleteNote(String noteName) {
+        if (mAppPreferencesLiveData.getValue() == null) return;
         mDisposables.add(
-                mNoteRepository.deleteNote(note)
+                mNoteRepository.getNote(
+                                noteName,
+                                mAppPreferencesLiveData.getValue().workingDir
+                        )
+                        .flatMap((Function<Note, SingleSource<Boolean>>) mNoteRepository::deleteNote)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 success -> mToastDisplay.showShort(R.string.note_deleted),

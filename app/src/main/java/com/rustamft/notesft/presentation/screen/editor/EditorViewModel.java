@@ -102,7 +102,8 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void onEditTextChanged(View view) {
-        if (view.getVisibility() != View.VISIBLE) {
+        if (view.getVisibility() == View.GONE &&
+                Boolean.TRUE.equals(observableNote.textChangedByUser.get())) {
             animateFadeIn(view);
         }
     }
