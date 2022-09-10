@@ -21,13 +21,6 @@ public class Note {
         mFile = file;
     }
 
-    public Note() { // TODO: remove
-        this.name = "";
-        this.text = "";
-        this.workingDir = "";
-        mFile = null;
-    }
-
     public String path() {
         if (mFile == null) return "";
         return mFile.getUri().toString();

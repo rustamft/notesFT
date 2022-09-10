@@ -13,11 +13,6 @@ public class AppPreferences {
         this.workingDir = workingDir;
     }
 
-    public AppPreferences() { // TODO: remove
-        this.nightMode = 0;
-        this.workingDir = "";
-    }
-
     public CopyBuilder copyBuilder() {
         return new CopyBuilder();
     }

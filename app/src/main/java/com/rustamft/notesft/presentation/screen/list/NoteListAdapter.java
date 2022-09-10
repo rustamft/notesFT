@@ -6,8 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,20 +21,14 @@ import java.util.Objects;
 public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHolder> {
 
     private ListViewModel mViewModel;
-    private final LiveData<List<String>> mNoteNameListLiveData; // Cached copy of notes list
+    private final LiveData<List<String>> mNoteNameListLiveData;
+    private final Observer<List<String>> mListObserver = this::submitList;
 
-    NoteListAdapter(
-            LifecycleOwner lifecycleOwner,
-            ListViewModel viewModel,
-            LiveData<List<String>> noteNameListLiveData
-    ) {
+    NoteListAdapter(ListViewModel viewModel) {
         super(new DiffCallback());
         mViewModel = viewModel;
-        mNoteNameListLiveData = noteNameListLiveData;
-        mNoteNameListLiveData.observe(
-                lifecycleOwner,
-                this::submitList
-        );
+        mNoteNameListLiveData = mViewModel.getNoteNameListLiveData();
+        mNoteNameListLiveData.observeForever(mListObserver);
     }
 
     @NonNull
@@ -56,12 +50,6 @@ public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHol
     }
 
     @Override
-    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
-        mViewModel = null;
-    }
-
-    @Override
     public int getItemCount() {
         if (mNoteNameListLiveData.getValue() == null) {
             return 0;
@@ -70,10 +58,14 @@ public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHol
         }
     }
 
-    String getNoteAtPosition(int position) {
+    protected String getNoteAtPosition(int position) {
         return Objects.requireNonNull(mNoteNameListLiveData.getValue()).get(position);
     }
 
+    protected void clear() {
+        mNoteNameListLiveData.removeObserver(mListObserver);
+        mViewModel = null;
+    }
 
     protected static class ViewHolder extends RecyclerView.ViewHolder
             implements View.OnCreateContextMenuListener {

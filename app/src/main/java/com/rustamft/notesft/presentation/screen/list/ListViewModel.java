@@ -46,6 +46,7 @@ public class ListViewModel extends ViewModel {
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>();
+    private final NoteListAdapter mNoteNameListAdapter = new NoteListAdapter(this);
 
     @Inject
     ListViewModel(
@@ -75,6 +76,7 @@ public class ListViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         mDisposables.clear();
+        mNoteNameListAdapter.clear();
         super.onCleared();
     }
 
@@ -88,6 +90,10 @@ public class ListViewModel extends ViewModel {
 
     public LiveData<List<String>> getNoteNameListLiveData() {
         return mNoteNameListLiveData;
+    }
+
+    public NoteListAdapter getNoteNameListAdapter() {
+        return mNoteNameListAdapter;
     }
 
     public void navigateNext(View view, String noteName) {
@@ -194,7 +200,7 @@ public class ListViewModel extends ViewModel {
         navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
     }
 
-    private void createNote(View view, String noteName) { // TODO: view mParent leak, maybe this
+    private void createNote(View view, String noteName) {
         if (mAppPreferencesLiveData.getValue() == null) return;
         mDisposables.add(
                 mNoteRepository.getNote(
@@ -212,7 +218,7 @@ public class ListViewModel extends ViewModel {
                         })
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> {
+                                success -> { // TODO: view mParent leak at FAB
                                     if (success) navigateNext(view, noteName);
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())

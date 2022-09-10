@@ -36,7 +36,7 @@ android {
 
 dependencies {
 
-    implementation 'androidx.appcompat:appcompat:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -44,15 +44,14 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0-alpha07'
     androidTestImplementation 'androidx.test:rules:1.4.1-alpha07'
-    // Desugaring
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+    // Desugar
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.8'
     // Lifecycle components
     def lifecycle_version = '2.5.1'
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
-    //implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.0-alpha07'
     // Navigation
-    def nav_version = '2.5.1'
+    def nav_version = '2.5.2'
     implementation "androidx.navigation:navigation-fragment:$nav_version"
     implementation "androidx.navigation:navigation-ui:$nav_version"
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
@@ -64,6 +63,6 @@ dependencies {
     def hilt_version = '2.43.2'
     implementation "com.google.dagger:hilt-android:$hilt_version"
     annotationProcessor "com.google.dagger:hilt-compiler:$hilt_version"
-    //kapt "com.google.dagger:hilt-compiler:$hilt_version"
+    // LeakCanary
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
 }

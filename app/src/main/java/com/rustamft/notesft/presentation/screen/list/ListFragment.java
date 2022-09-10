@@ -63,19 +63,14 @@ public class ListFragment extends Fragment {
                         mViewModel.navigateBack(requireView());
                     }
                 }
-        );
+        ); // TODO: doesn't set proper mode
         requireActivity().addMenuProvider(
                 new ListMenuProvider(),
                 getViewLifecycleOwner(),
                 Lifecycle.State.RESUMED
         );
         mBinding.setViewModel(mViewModel);
-        mBinding.setAdapter(
-                new NoteListAdapter(
-                        this.getViewLifecycleOwner(),
-                        mViewModel,
-                        mViewModel.getNoteNameListLiveData())
-        );
+        mBinding.recyclerviewList.setAdapter(mViewModel.getNoteNameListAdapter());
         registerForContextMenu(mBinding.recyclerviewList);
     }
 
@@ -91,8 +86,9 @@ public class ListFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
+        mBinding.recyclerviewList.setAdapter(null);
         mBinding = null;
+        super.onDestroyView();
     }
 
     private void setNightMode(int nightMode) {
