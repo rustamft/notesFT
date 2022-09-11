@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHolder> {
 
-    private ListViewModel mViewModel;
+    private ListViewModel mViewModel; // TODO: try to replace it by navigator
     private final LiveData<List<String>> mNoteNameListLiveData;
     private final Observer<List<String>> mListObserver = this::submitList;
 

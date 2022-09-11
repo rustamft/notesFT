@@ -7,13 +7,12 @@ import android.view.View;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.util.ToastDisplay;
+import com.rustamft.notesft.presentation.navigation.Navigator;
 
 import javax.inject.Inject;
 
@@ -26,16 +25,19 @@ public class PermissionViewModel extends ViewModel {
 
     private final AppPreferencesRepository mAppPreferencesRepository;
     private final ToastDisplay mToastDisplay;
+    private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferences = new MutableLiveData<>();
 
     @Inject
     PermissionViewModel(
             AppPreferencesRepository appPreferencesRepository,
-            ToastDisplay toastDisplay
+            ToastDisplay toastDisplay,
+            Navigator navigator
     ) {
         mAppPreferencesRepository = appPreferencesRepository;
         mToastDisplay = toastDisplay;
+        mNavigator = navigator;
         mDisposables.add(
                 mAppPreferencesRepository.getAppPreferences()
                         .subscribe(mAppPreferences::postValue)
@@ -63,7 +65,7 @@ public class PermissionViewModel extends ViewModel {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 success -> {
-                                    if (success) navigateNext(view);
+                                    if (success) navigateNext();
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
@@ -76,8 +78,7 @@ public class PermissionViewModel extends ViewModel {
         context.getContentResolver().takePersistableUriPermission(workingDirUri, flags);
     }
 
-    private void navigateNext(View view) {
-        NavController navController = Navigation.findNavController(view);
-        navController.navigate(R.id.action_permissionFragment_to_listFragment);
+    private void navigateNext() {
+        mNavigator.navigate(R.id.action_permissionFragment_to_listFragment);
     }
 }

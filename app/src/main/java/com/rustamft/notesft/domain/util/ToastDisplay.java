@@ -3,7 +3,7 @@ package com.rustamft.notesft.domain.util;
 import android.content.Context;
 import android.widget.Toast;
 
-public class ToastDisplay {
+public class ToastDisplay { // TODO: move to presentation layer
 
     private final Context mContext;
 

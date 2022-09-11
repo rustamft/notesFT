@@ -22,7 +22,7 @@
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{(view) -> viewModel.navigateNext(view, textView.getText().toString())}"
+                android:onClick="@{() -> viewModel.navigateNext(textView.getText().toString())}"
                 android:padding="@dimen/margin_big"
                 android:text="@string/sample_text"
                 android:textColor="?colorOnSecondary"

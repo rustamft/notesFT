@@ -5,7 +5,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-public abstract class DateTimeStringBuilder {
+public abstract class DateTimeStringBuilder { // TODO: move to presentation layer
 
     public static String millisToString(long milliseconds) {
         Instant instant = Instant.ofEpochMilli(milliseconds);

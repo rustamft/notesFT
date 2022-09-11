@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/margin_fab"
             android:contentDescription="@string/action_save"
-            android:onClick="@{(view) -> viewModel.onNoteSave(view, edittextNote)}"
+            android:onClick="@{() -> viewModel.onNoteSave(edittextNote)}"
             android:src="@drawable/ic_save"
             android:visibility="@{View.GONE}"
             app:layout_constraintBottom_toBottomOf="parent"

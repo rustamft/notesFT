@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 // Solution from https://stackoverflow.com/questions/62671106/onactivityresult-method-is-deprecated-what-is-the-alternative
-public class BetterActivityResult<Input, Result> {
+public class BetterActivityResult<Input, Result> { // TODO: move to presentation layer
     /**
      * Register activity result using a {@link ActivityResultContract} and an in-place activity result callback like
      * the default approach. You can still customise callback using {@link #launch(Object, OnActivityResult)}.

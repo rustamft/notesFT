@@ -10,8 +10,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
@@ -23,6 +21,7 @@ import com.rustamft.notesft.domain.util.DateTimeStringBuilder;
 import com.rustamft.notesft.domain.util.ToastDisplay;
 import com.rustamft.notesft.presentation.activity.MainActivity;
 import com.rustamft.notesft.presentation.model.ObservableNote;
+import com.rustamft.notesft.presentation.navigation.Navigator;
 
 import javax.inject.Inject;
 
@@ -35,20 +34,23 @@ public class EditorViewModel extends ViewModel {
 
     private final NoteRepository mNoteRepository;
     private final ToastDisplay mToastDisplay;
+    private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
     private androidx.lifecycle.Observer<String> mActionBarTitleObserver; // TODO: change the approach
-    public ObservableNote observableNote = new ObservableNote();
+    public final ObservableNote observableNote = new ObservableNote();
 
     @Inject
     public EditorViewModel(
             SavedStateHandle state,
             AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository,
-            ToastDisplay toastDisplay
+            ToastDisplay toastDisplay,
+            Navigator navigator
     ) {
         mNoteRepository = noteRepository;
         mToastDisplay = toastDisplay;
+        mNavigator = navigator;
         String noteName = state.get(Constants.NOTE_NAME);
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
@@ -61,7 +63,7 @@ public class EditorViewModel extends ViewModel {
                             ))
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
-                                    note -> observableNote.note.set(note),
+                                    observableNote.note::set,
                                     error -> mToastDisplay.showLong(error.getMessage())
                             )
             );
@@ -81,10 +83,10 @@ public class EditorViewModel extends ViewModel {
         View view = (View) fab.getParent();
         if (fab.getVisibility() == View.VISIBLE) {
             promptUnsavedText(view);
-        } else navigateBack(view);
+        } else navigateBack();
     }
 
-    public void onNoteSave(View view, EditText editText) {
+    public void onNoteSave(EditText editText) {
         final Note note = observableNote.note.get();
         if (note == null) return;
         final Note.CopyBuilder noteCopyBuilder = note.copyBuilder();
@@ -95,7 +97,7 @@ public class EditorViewModel extends ViewModel {
                         )
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> navigateBack(view),
+                                success -> navigateBack(),
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
@@ -191,9 +193,8 @@ public class EditorViewModel extends ViewModel {
     /**
      * Straight navigate back in stack without any checks
      */
-    private void navigateBack(View view) {
-        NavController navController = Navigation.findNavController(view);
-        navController.popBackStack();
+    private void navigateBack() {
+        mNavigator.popBackStack();
     }
 
     private void promptUnsavedText(View view) {
@@ -203,14 +204,14 @@ public class EditorViewModel extends ViewModel {
                 .setPositiveButton(R.string.action_save, (dialog, which) -> {
                     // Save button clicked
                     EditText editText = view.findViewById(R.id.edittext_note);
-                    onNoteSave(view, editText);
+                    onNoteSave(editText);
                 })
                 .setNegativeButton(R.string.action_cancel, (dialog, which) -> {
                     // Cancel button clicked
                 })
                 .setNeutralButton(R.string.action_discard, (dialog, which) -> {
                     // Discard button clicked
-                    navigateBack(view);
+                    navigateBack();
                 })
                 .show();
     }

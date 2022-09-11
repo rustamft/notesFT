@@ -5,7 +5,7 @@ import android.content.UriPermission;
 
 import java.util.List;
 
-public class PermissionChecker {
+public class PermissionChecker { // TODO: move to presentation layer
 
     private final Context mContext;
 

@@ -60,7 +60,7 @@ public class ListFragment extends Fragment {
                     if (!mViewModel.getPermissionChecker().hasWorkingDirPermission(
                             appPreferences.workingDir
                     )) {
-                        mViewModel.navigateBack(requireView());
+                        mViewModel.navigateBack();
                     }
                 }
         ); // TODO: doesn't set proper mode
@@ -70,7 +70,7 @@ public class ListFragment extends Fragment {
                 Lifecycle.State.RESUMED
         );
         mBinding.setViewModel(mViewModel);
-        mBinding.recyclerviewList.setAdapter(mViewModel.getNoteNameListAdapter());
+        mBinding.recyclerviewList.setAdapter(mViewModel.noteNameListAdapter);
         registerForContextMenu(mBinding.recyclerviewList);
     }
 

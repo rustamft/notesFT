@@ -24,6 +24,7 @@ import com.rustamft.notesft.domain.repository.NoteRepository;
 import com.rustamft.notesft.domain.util.Constants;
 import com.rustamft.notesft.domain.util.PermissionChecker;
 import com.rustamft.notesft.domain.util.ToastDisplay;
+import com.rustamft.notesft.presentation.navigation.Navigator;
 
 import java.util.List;
 
@@ -43,22 +44,25 @@ public class ListViewModel extends ViewModel {
     private final NoteRepository mNoteRepository;
     private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
+    private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>();
-    private final NoteListAdapter mNoteNameListAdapter = new NoteListAdapter(this);
+    public final NoteListAdapter noteNameListAdapter = new NoteListAdapter(this);
 
     @Inject
     ListViewModel(
             AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository,
             PermissionChecker permissionChecker,
-            ToastDisplay toastDisplay
+            ToastDisplay toastDisplay,
+            Navigator navigator
     ) {
         mAppPreferencesRepository = appPreferencesRepository;
         mNoteRepository = noteRepository;
         mPermissionChecker = permissionChecker;
         mToastDisplay = toastDisplay;
+        mNavigator = navigator;
         mDisposables.add(
                 mAppPreferencesRepository.getAppPreferences()
                         .flatMap(appPreferences -> {
@@ -76,7 +80,7 @@ public class ListViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         mDisposables.clear();
-        mNoteNameListAdapter.clear();
+        noteNameListAdapter.clear();
         super.onCleared();
     }
 
@@ -92,20 +96,14 @@ public class ListViewModel extends ViewModel {
         return mNoteNameListLiveData;
     }
 
-    public NoteListAdapter getNoteNameListAdapter() {
-        return mNoteNameListAdapter;
-    }
-
-    public void navigateNext(View view, String noteName) {
+    public void navigateNext(String noteName) {
         Bundle bundle = new Bundle();
         bundle.putString(Constants.NOTE_NAME, noteName);
-        NavController navController = Navigation.findNavController(view);
-        navController.navigate(R.id.action_listFragment_to_editorFragment, bundle);
+        mNavigator.navigate(R.id.action_listFragment_to_editorFragment, bundle);
     }
 
-    public void navigateBack(View view) {
-        NavController navController = Navigation.findNavController(view);
-        navController.navigate(R.id.action_listFragment_to_permissionFragment);
+    public void navigateBack() {
+        mNavigator.navigate(R.id.action_listFragment_to_permissionFragment);
     }
 
     public void promptCreation(View view) {
@@ -117,7 +115,6 @@ public class ListViewModel extends ViewModel {
                 .setTitle(R.string.note_new)
                 .setView(dialogView)
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> createNote(
-                        view,
                         editText.getText().toString()
                 )))
                 .setNegativeButton(R.string.action_cancel, ((dialog, which) -> { /* Cancel */ }))
@@ -200,7 +197,7 @@ public class ListViewModel extends ViewModel {
         navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
     }
 
-    private void createNote(View view, String noteName) {
+    private void createNote(String noteName) {
         if (mAppPreferencesLiveData.getValue() == null) return;
         mDisposables.add(
                 mNoteRepository.getNote(
@@ -218,8 +215,8 @@ public class ListViewModel extends ViewModel {
                         })
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> { // TODO: view mParent leak at FAB
-                                    if (success) navigateNext(view, noteName);
+                                success -> {
+                                    if (success) navigateNext(noteName);
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
