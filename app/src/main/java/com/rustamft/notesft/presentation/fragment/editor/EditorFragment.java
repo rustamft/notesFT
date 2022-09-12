@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.editor;
+package com.rustamft.notesft.presentation.fragment.editor;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -54,7 +55,8 @@ public class EditorFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        requireActivity().addMenuProvider(
+        FragmentActivity fragmentActivity = requireActivity();
+        fragmentActivity.addMenuProvider(
                 new EditorMenuProvider(),
                 getViewLifecycleOwner(),
                 Lifecycle.State.RESUMED
@@ -67,7 +69,7 @@ public class EditorFragment extends Fragment {
                 mViewModel.onBackPressed(mBinding.fabSave);
             }
         };
-        mViewModel.registerActionBarTitleObserver((MainActivity) requireActivity());
+        mViewModel.registerActionBarTitleObserver((MainActivity) fragmentActivity);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.list;
+package com.rustamft.notesft.presentation.fragment.list;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +9,6 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.navigation.NavController;
@@ -17,14 +16,14 @@ import androidx.navigation.Navigation;
 
 import com.rustamft.notesft.BuildConfig;
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.domain.Constants;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
-import com.rustamft.notesft.domain.util.Constants;
-import com.rustamft.notesft.domain.util.PermissionChecker;
-import com.rustamft.notesft.domain.util.ToastDisplay;
 import com.rustamft.notesft.presentation.navigation.Navigator;
+import com.rustamft.notesft.presentation.navigation.Route;
+import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
 import java.util.List;
 
@@ -40,29 +39,27 @@ import io.reactivex.rxjava3.functions.Function;
 @HiltViewModel
 public class ListViewModel extends ViewModel {
 
+    public final NoteListAdapter noteNameListAdapter;
     private final AppPreferencesRepository mAppPreferencesRepository;
     private final NoteRepository mNoteRepository;
-    private final PermissionChecker mPermissionChecker;
     private final ToastDisplay mToastDisplay;
     private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>();
-    public final NoteListAdapter noteNameListAdapter = new NoteListAdapter(this);
 
     @Inject
     ListViewModel(
             AppPreferencesRepository appPreferencesRepository,
             NoteRepository noteRepository,
-            PermissionChecker permissionChecker,
             ToastDisplay toastDisplay,
             Navigator navigator
     ) {
         mAppPreferencesRepository = appPreferencesRepository;
         mNoteRepository = noteRepository;
-        mPermissionChecker = permissionChecker;
         mToastDisplay = toastDisplay;
         mNavigator = navigator;
+        noteNameListAdapter = new NoteListAdapter(navigator, mNoteNameListLiveData);
         mDisposables.add(
                 mAppPreferencesRepository.getAppPreferences()
                         .flatMap(appPreferences -> {
@@ -84,30 +81,7 @@ public class ListViewModel extends ViewModel {
         super.onCleared();
     }
 
-    public PermissionChecker getPermissionChecker() {
-        return mPermissionChecker;
-    }
-
-    public LiveData<AppPreferences> getAppPreferencesLiveData() {
-        return mAppPreferencesLiveData;
-    }
-
-    public LiveData<List<String>> getNoteNameListLiveData() {
-        return mNoteNameListLiveData;
-    }
-
-    public void navigateNext(String noteName) {
-        Bundle bundle = new Bundle();
-        bundle.putString(Constants.NOTE_NAME, noteName);
-        mNavigator.navigate(R.id.action_listFragment_to_editorFragment, bundle);
-    }
-
-    public void navigateBack() {
-        mNavigator.navigate(R.id.action_listFragment_to_permissionFragment);
-    }
-
     public void promptCreation(View view) {
-        if (mAppPreferencesLiveData.getValue() == null) return;
         final Context context = view.getContext();
         final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
@@ -131,8 +105,7 @@ public class ListViewModel extends ViewModel {
     }
 
     public void promptDeletion(Context context, int noteIndex) {
-        if (mAppPreferencesLiveData.getValue() == null ||
-                mNoteNameListLiveData.getValue() == null) return;
+        if (mNoteNameListLiveData.getValue() == null) return;
         final List<String> noteNameList = mNoteNameListLiveData.getValue();
         final String noteName = noteNameList.get(noteIndex);
         final String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
@@ -216,7 +189,8 @@ public class ListViewModel extends ViewModel {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 success -> {
-                                    if (success) navigateNext(noteName);
+                                    if (success)
+                                        mNavigator.navigate(Route.LIST_TO_EDITOR, noteName);
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )

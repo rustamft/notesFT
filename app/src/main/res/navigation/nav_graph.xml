@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/permissionFragment"
-        android:name="com.rustamft.notesft.presentation.screen.permission.PermissionFragment"
+        android:name="com.rustamft.notesft.presentation.fragment.permission.PermissionFragment"
         android:label="fragment_permission"
         tools:layout="@layout/fragment_permission">
         <action
@@ -20,7 +20,7 @@
     </fragment>
     <fragment
         android:id="@+id/listFragment"
-        android:name="com.rustamft.notesft.presentation.screen.list.ListFragment"
+        android:name="com.rustamft.notesft.presentation.fragment.list.ListFragment"
         android:label="fragment_list"
         tools:layout="@layout/fragment_list">
         <action
@@ -34,7 +34,7 @@
     </fragment>
     <fragment
         android:id="@+id/editorFragment"
-        android:name="com.rustamft.notesft.presentation.screen.editor.EditorFragment"
+        android:name="com.rustamft.notesft.presentation.fragment.editor.EditorFragment"
         android:label="fragment_editor"
         tools:layout="@layout/fragment_editor"/>
 </navigation>

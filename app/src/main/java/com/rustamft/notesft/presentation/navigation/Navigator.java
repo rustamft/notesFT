@@ -2,11 +2,12 @@ package com.rustamft.notesft.presentation.navigation;
 
 import android.os.Bundle;
 
-import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 import androidx.navigation.NavController;
 
-public class Navigator { // TODO: try to make destination choosing easier
+import com.rustamft.notesft.domain.Constants;
+
+public class Navigator {
 
     private NavController mNavController;
 
@@ -14,13 +15,18 @@ public class Navigator { // TODO: try to make destination choosing easier
         mNavController = navController;
     }
 
-    public void navigate(@IdRes int resId) {
-        navigate(resId, null);
+    public void navigate(Route route) {
+        navigate(route, null);
     }
 
-    public void navigate(@IdRes int resId, @Nullable Bundle args) {
+    public void navigate(Route route, @Nullable String noteName) {
         if (mNavController != null) {
-            mNavController.navigate(resId, args);
+            Bundle args = null;
+            if (noteName != null) {
+                args = new Bundle();
+                args.putString(Constants.NOTE_NAME, noteName);
+            }
+            mNavController.navigate(route.resId, args);
         }
     }
 

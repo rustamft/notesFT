@@ -1,4 +1,4 @@
-package com.rustamft.notesft.domain.util;
+package com.rustamft.notesft.domain;
 
 public abstract class Constants {
 

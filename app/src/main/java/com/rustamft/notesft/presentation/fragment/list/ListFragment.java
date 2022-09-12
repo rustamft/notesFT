@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.list;
+package com.rustamft.notesft.presentation.fragment.list;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
@@ -53,17 +52,6 @@ public class ListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mViewModel.getAppPreferencesLiveData().observe( // Wait for app prefs to set up
-                getViewLifecycleOwner(),
-                appPreferences -> {
-                    setNightMode(appPreferences.nightMode);
-                    if (!mViewModel.getPermissionChecker().hasWorkingDirPermission(
-                            appPreferences.workingDir
-                    )) {
-                        mViewModel.navigateBack();
-                    }
-                }
-        ); // TODO: doesn't set proper mode
         requireActivity().addMenuProvider(
                 new ListMenuProvider(),
                 getViewLifecycleOwner(),
@@ -89,20 +77,6 @@ public class ListFragment extends Fragment {
         mBinding.recyclerviewList.setAdapter(null);
         mBinding = null;
         super.onDestroyView();
-    }
-
-    private void setNightMode(int nightMode) {
-        switch (nightMode) { // To fix IDE complains about non-constant value
-            case AppCompatDelegate.MODE_NIGHT_YES:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                break;
-            case AppCompatDelegate.MODE_NIGHT_NO:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                break;
-            default:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
-                break;
-        }
     }
 
     private class ListMenuProvider implements MenuProvider {

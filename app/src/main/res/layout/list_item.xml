@@ -3,9 +3,11 @@
 
     <data>
 
+        <import type="com.rustamft.notesft.presentation.navigation.Route" />
+
         <variable
-            name="viewModel"
-            type="com.rustamft.notesft.presentation.screen.list.ListViewModel" />
+            name="navigator"
+            type="com.rustamft.notesft.presentation.navigation.Navigator" />
     </data>
 
     <LinearLayout
@@ -22,7 +24,7 @@
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{() -> viewModel.navigateNext(textView.getText().toString())}"
+                android:onClick="@{() -> navigator.navigate(Route.LIST_TO_EDITOR, textView.getText().toString())}"
                 android:padding="@dimen/margin_big"
                 android:text="@string/sample_text"
                 android:textColor="?colorOnSecondary"

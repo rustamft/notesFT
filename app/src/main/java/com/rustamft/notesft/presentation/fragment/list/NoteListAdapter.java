@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.list;
+package com.rustamft.notesft.presentation.fragment.list;
 
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -14,21 +14,25 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.ListItemBinding;
+import com.rustamft.notesft.presentation.navigation.Navigator;
 
 import java.util.List;
 import java.util.Objects;
 
 public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHolder> {
 
-    private ListViewModel mViewModel; // TODO: try to replace it by navigator
-    private final LiveData<List<String>> mNoteNameListLiveData;
+    private final Navigator mNavigator;
+    private final LiveData<List<String>> mListLiveData;
     private final Observer<List<String>> mListObserver = this::submitList;
 
-    NoteListAdapter(ListViewModel viewModel) {
+    NoteListAdapter(
+            Navigator navigator,
+            LiveData<List<String>> listLiveData
+    ) {
         super(new DiffCallback());
-        mViewModel = viewModel;
-        mNoteNameListLiveData = mViewModel.getNoteNameListLiveData();
-        mNoteNameListLiveData.observeForever(mListObserver);
+        mNavigator = navigator;
+        mListLiveData = listLiveData;
+        mListLiveData.observeForever(mListObserver);
     }
 
     @NonNull
@@ -39,7 +43,7 @@ public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHol
                 parent,
                 false
         );
-        binding.setViewModel(mViewModel);
+        binding.setNavigator(mNavigator);
         return new ViewHolder(binding);
     }
 
@@ -51,20 +55,19 @@ public class NoteListAdapter extends ListAdapter<String, NoteListAdapter.ViewHol
 
     @Override
     public int getItemCount() {
-        if (mNoteNameListLiveData.getValue() == null) {
+        if (mListLiveData.getValue() == null) {
             return 0;
         } else {
-            return mNoteNameListLiveData.getValue().size();
+            return mListLiveData.getValue().size();
         }
     }
 
     protected String getNoteAtPosition(int position) {
-        return Objects.requireNonNull(mNoteNameListLiveData.getValue()).get(position);
+        return Objects.requireNonNull(mListLiveData.getValue()).get(position);
     }
 
     protected void clear() {
-        mNoteNameListLiveData.removeObserver(mListObserver);
-        mViewModel = null;
+        mListLiveData.removeObserver(mListObserver);
     }
 
     protected static class ViewHolder extends RecyclerView.ViewHolder

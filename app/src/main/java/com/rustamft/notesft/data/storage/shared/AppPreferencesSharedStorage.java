@@ -7,7 +7,7 @@ import android.content.SharedPreferences;
 
 import com.rustamft.notesft.data.model.AppPreferencesDataModel;
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
-import com.rustamft.notesft.domain.util.Constants;
+import com.rustamft.notesft.domain.Constants;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;

@@ -1,11 +1,11 @@
-package com.rustamft.notesft.domain.util;
+package com.rustamft.notesft.presentation.permission;
 
 import android.content.Context;
 import android.content.UriPermission;
 
 import java.util.List;
 
-public class PermissionChecker { // TODO: move to presentation layer
+public class PermissionChecker {
 
     private final Context mContext;
 

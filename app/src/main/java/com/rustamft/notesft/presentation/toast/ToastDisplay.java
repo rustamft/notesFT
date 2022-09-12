@@ -1,9 +1,9 @@
-package com.rustamft.notesft.domain.util;
+package com.rustamft.notesft.presentation.toast;
 
 import android.content.Context;
 import android.widget.Toast;
 
-public class ToastDisplay { // TODO: move to presentation layer
+public class ToastDisplay {
 
     private final Context mContext;
 

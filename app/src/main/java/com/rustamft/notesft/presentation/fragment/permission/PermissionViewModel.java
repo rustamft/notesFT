@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.permission;
+package com.rustamft.notesft.presentation.fragment.permission;
 
 import android.content.Context;
 import android.content.Intent;
@@ -8,11 +8,11 @@ import android.view.View;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
-import com.rustamft.notesft.domain.util.ToastDisplay;
+import com.rustamft.notesft.presentation.toast.ToastDisplay;
 import com.rustamft.notesft.presentation.navigation.Navigator;
+import com.rustamft.notesft.presentation.navigation.Route;
 
 import javax.inject.Inject;
 
@@ -65,7 +65,7 @@ public class PermissionViewModel extends ViewModel {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 success -> {
-                                    if (success) navigateNext();
+                                    if (success) mNavigator.navigate(Route.PERMISSION_TO_LIST);
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
@@ -76,9 +76,5 @@ public class PermissionViewModel extends ViewModel {
         final int flags =
                 Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
         context.getContentResolver().takePersistableUriPermission(workingDirUri, flags);
-    }
-
-    private void navigateNext() {
-        mNavigator.navigate(R.id.action_permissionFragment_to_listFragment);
     }
 }

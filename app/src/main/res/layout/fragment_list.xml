@@ -7,13 +7,13 @@
 
         <variable
             name="viewModel"
-            type="com.rustamft.notesft.presentation.screen.list.ListViewModel" />
+            type="com.rustamft.notesft.presentation.fragment.list.ListViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".presentation.screen.list.ListFragment">
+        tools:context=".presentation.fragment.list.ListFragment">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerview_list"

@@ -1,4 +1,4 @@
-package com.rustamft.notesft.domain.util;
+package com.rustamft.notesft.presentation.permission;
 
 import android.content.Intent;
 import androidx.activity.result.ActivityResult;
@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 // Solution from https://stackoverflow.com/questions/62671106/onactivityresult-method-is-deprecated-what-is-the-alternative
-public class BetterActivityResult<Input, Result> { // TODO: move to presentation layer
+public class BetterActivityResult<Input, Result> {
     /**
      * Register activity result using a {@link ActivityResultContract} and an in-place activity result callback like
      * the default approach. You can still customise callback using {@link #launch(Object, OnActivityResult)}.

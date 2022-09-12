@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.permission;
+package com.rustamft.notesft.presentation.fragment.permission;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -14,8 +14,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.rustamft.notesft.databinding.FragmentPermissionBinding;
-import com.rustamft.notesft.domain.util.BetterActivityResult;
-import com.rustamft.notesft.domain.util.Constants;
+import com.rustamft.notesft.presentation.permission.BetterActivityResult;
+import com.rustamft.notesft.domain.Constants;
 
 import dagger.hilt.android.AndroidEntryPoint;
 

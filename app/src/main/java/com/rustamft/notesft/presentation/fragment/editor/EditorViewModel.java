@@ -1,4 +1,4 @@
-package com.rustamft.notesft.presentation.screen.editor;
+package com.rustamft.notesft.presentation.fragment.editor;
 
 import android.content.Context;
 import android.view.View;
@@ -16,9 +16,9 @@ import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
-import com.rustamft.notesft.domain.util.Constants;
-import com.rustamft.notesft.domain.util.DateTimeStringBuilder;
-import com.rustamft.notesft.domain.util.ToastDisplay;
+import com.rustamft.notesft.domain.Constants;
+import com.rustamft.notesft.presentation.time.TimeConverter;
+import com.rustamft.notesft.presentation.toast.ToastDisplay;
 import com.rustamft.notesft.presentation.activity.MainActivity;
 import com.rustamft.notesft.presentation.model.ObservableNote;
 import com.rustamft.notesft.presentation.navigation.Navigator;
@@ -32,13 +32,13 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 @HiltViewModel
 public class EditorViewModel extends ViewModel {
 
+    public final ObservableNote observableNote = new ObservableNote();
     private final NoteRepository mNoteRepository;
     private final ToastDisplay mToastDisplay;
     private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
     private androidx.lifecycle.Observer<String> mActionBarTitleObserver; // TODO: change the approach
-    public final ObservableNote observableNote = new ObservableNote();
 
     @Inject
     public EditorViewModel(
@@ -83,7 +83,7 @@ public class EditorViewModel extends ViewModel {
         View view = (View) fab.getParent();
         if (fab.getVisibility() == View.VISIBLE) {
             promptUnsavedText(view);
-        } else navigateBack();
+        } else mNavigator.popBackStack();
     }
 
     public void onNoteSave(EditText editText) {
@@ -97,7 +97,7 @@ public class EditorViewModel extends ViewModel {
                         )
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> navigateBack(),
+                                success -> mNavigator.popBackStack(),
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
@@ -144,7 +144,7 @@ public class EditorViewModel extends ViewModel {
         String size = context.getString(R.string.about_note_file_size) + note.length() +
                 context.getString(R.string.about_note_byte);
         String lastModified = context.getString(R.string.about_note_last_modified) +
-                DateTimeStringBuilder.millisToString(note.lastModified());
+                TimeConverter.millisToString(note.lastModified());
         String path = context.getString(R.string.about_note_file_path) + note.path();
         String message = size + "\n\n" + lastModified + "\n\n" + path;
         new AlertDialog.Builder(context)
@@ -190,13 +190,6 @@ public class EditorViewModel extends ViewModel {
         }
     }
 
-    /**
-     * Straight navigate back in stack without any checks
-     */
-    private void navigateBack() {
-        mNavigator.popBackStack();
-    }
-
     private void promptUnsavedText(View view) {
         new AlertDialog.Builder(view.getContext())
                 .setTitle(R.string.unsaved_changes)
@@ -211,7 +204,7 @@ public class EditorViewModel extends ViewModel {
                 })
                 .setNeutralButton(R.string.action_discard, (dialog, which) -> {
                     // Discard button clicked
-                    navigateBack();
+                    mNavigator.popBackStack();
                 })
                 .show();
     }

@@ -1,11 +1,13 @@
-package com.rustamft.notesft.domain.util;
+package com.rustamft.notesft.presentation.time;
+
+import com.rustamft.notesft.domain.Constants;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-public abstract class DateTimeStringBuilder { // TODO: move to presentation layer
+public abstract class TimeConverter {
 
     public static String millisToString(long milliseconds) {
         Instant instant = Instant.ofEpochMilli(milliseconds);

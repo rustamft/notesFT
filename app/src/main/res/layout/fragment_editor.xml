@@ -8,13 +8,13 @@
 
         <variable
             name="viewModel"
-            type="com.rustamft.notesft.presentation.screen.editor.EditorViewModel" />
+            type="com.rustamft.notesft.presentation.fragment.editor.EditorViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".presentation.screen.editor.EditorFragment">
+        tools:context=".presentation.fragment.editor.EditorFragment">
 
         <ScrollView
             android:layout_width="match_parent"
