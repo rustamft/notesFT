@@ -12,15 +12,14 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.FragmentEditorBinding;
-import com.rustamft.notesft.presentation.activity.MainActivity;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -44,7 +43,7 @@ public class EditorFragment extends Fragment {
             Bundle savedInstanceState
     ) {
         // Enable ActionBar back button
-        ActionBar actionBar = ((MainActivity) requireActivity()).getSupportActionBar();
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
@@ -55,8 +54,8 @@ public class EditorFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        FragmentActivity fragmentActivity = requireActivity();
-        fragmentActivity.addMenuProvider(
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.addMenuProvider(
                 new EditorMenuProvider(),
                 getViewLifecycleOwner(),
                 Lifecycle.State.RESUMED
@@ -69,7 +68,7 @@ public class EditorFragment extends Fragment {
                 mViewModel.onBackPressed(mBinding.fabSave);
             }
         };
-        mViewModel.registerActionBarTitleObserver((MainActivity) fragmentActivity);
+        mViewModel.registerActionBarTitleObserver(activity);
     }
 
     @Override
@@ -83,7 +82,6 @@ public class EditorFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         mOnBackPressed.remove();
-        mViewModel.resetActionBarTitle(requireContext());
         mBinding = null;
     }
 

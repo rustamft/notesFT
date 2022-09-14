@@ -7,21 +7,21 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
+import com.rustamft.notesft.domain.Constants;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
-import com.rustamft.notesft.domain.Constants;
-import com.rustamft.notesft.presentation.time.TimeConverter;
-import com.rustamft.notesft.presentation.toast.ToastDisplay;
-import com.rustamft.notesft.presentation.activity.MainActivity;
 import com.rustamft.notesft.presentation.model.ObservableNote;
 import com.rustamft.notesft.presentation.navigation.Navigator;
+import com.rustamft.notesft.presentation.time.TimeConverter;
+import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
 import javax.inject.Inject;
 
@@ -38,7 +38,6 @@ public class EditorViewModel extends ViewModel {
     private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
-    private androidx.lifecycle.Observer<String> mActionBarTitleObserver; // TODO: change the approach
 
     @Inject
     public EditorViewModel(
@@ -72,6 +71,7 @@ public class EditorViewModel extends ViewModel {
 
     @Override
     protected void onCleared() {
+        resetActionBarTitle();
         mDisposables.clear();
         super.onCleared();
     }
@@ -87,9 +87,9 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void onNoteSave(EditText editText) {
-        final Note note = observableNote.note.get();
+        Note note = observableNote.note.get();
         if (note == null) return;
-        final Note.CopyBuilder noteCopyBuilder = note.copyBuilder();
+        Note.CopyBuilder noteCopyBuilder = note.copyBuilder();
         noteCopyBuilder.setText(editText.getText().toString());
         mDisposables.add(
                 mNoteRepository.saveNote(
@@ -110,12 +110,12 @@ public class EditorViewModel extends ViewModel {
         }
     }
 
-    public void promptRename(View view) {
-        final Note note = observableNote.note.get();
+    public void promptRename(View view) { // TODO: fix text changes cleared after renaming
+        Note note = observableNote.note.get();
         if (note == null) return;
-        final Context context = view.getContext();
-        final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
-        final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
+        Context context = view.getContext();
+        View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
+        EditText editText = dialogView.findViewById(R.id.edittext_dialog);
         editText.setText(note.name);
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_rename)
@@ -139,7 +139,7 @@ public class EditorViewModel extends ViewModel {
     }
 
     public void displayAboutNote(Context context) {
-        final Note note = observableNote.note.get();
+        Note note = observableNote.note.get();
         if (note == null) return;
         String size = context.getString(R.string.about_note_file_size) + note.length() +
                 context.getString(R.string.about_note_byte);
@@ -154,14 +154,6 @@ public class EditorViewModel extends ViewModel {
                     // Close button clicked
                 })
                 .show();
-    }
-
-    /**
-     * Sets the app name to the ActionBar title.
-     */
-    public void resetActionBarTitle(Context context) {
-        mActionBarTitle.setValue(context.getString(R.string.app_name));
-        mActionBarTitle.removeObserver(mActionBarTitleObserver);
     }
 
     protected boolean isNotNullNorBlank(String string) {
@@ -180,14 +172,24 @@ public class EditorViewModel extends ViewModel {
     /**
      * Makes the ActionBar title LiveData to be observed.
      *
-     * @param mainActivity the app's MainActivity.
+     * @param activity the app's MainActivity.
      */
-    void registerActionBarTitleObserver(MainActivity mainActivity) {
-        ActionBar actionBar = mainActivity.getSupportActionBar();
+    protected void registerActionBarTitleObserver(AppCompatActivity activity) {
+        ActionBar actionBar = activity.getSupportActionBar();
         if (actionBar != null) {
-            mActionBarTitleObserver = s -> actionBar.setTitle(mActionBarTitle.getValue());
-            mActionBarTitle.observe(mainActivity, mActionBarTitleObserver);
+            String title = mActionBarTitle.getValue();
+            if (title != null) {
+                actionBar.setTitle(title);
+            }
+            mActionBarTitle.observe(activity, actionBar::setTitle);
         }
+    }
+
+    /**
+     * Sets the app name to the ActionBar title.
+     */
+    private void resetActionBarTitle() {
+        mActionBarTitle.setValue(Constants.APP_NAME);
     }
 
     private void promptUnsavedText(View view) {

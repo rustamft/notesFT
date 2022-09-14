@@ -2,6 +2,7 @@ package com.rustamft.notesft.domain;
 
 public abstract class Constants {
 
+    public static final String APP_NAME = "notesFT";
     public static final String SHARED_PREF_FILE = "com.rustamft.notesft.shared_preferences";
     public static final String NIGHT_MODE = "night_mode";
     public static final String WORKING_DIR = "working_dir";

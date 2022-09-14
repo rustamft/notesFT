@@ -23,11 +23,11 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 public class MainActivity extends AppCompatActivity {
 
     @Inject
-    public Navigator navigator;
+    protected Navigator mNavigator;
     @Inject
-    AppPreferencesRepository mAppPreferencesRepository;
+    protected AppPreferencesRepository mAppPreferencesRepository;
     @Inject
-    PermissionChecker mPermissionChecker;
+    protected PermissionChecker mPermissionChecker;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
 
     @Override
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
                 .findFragmentById(R.id.nav_host);
         if (navHostFragment != null) {
             NavController navController = navHostFragment.getNavController();
-            navigator.setNavController(navController);
+            mNavigator.setNavController(navController);
         }
         mDisposables.add(
                 mAppPreferencesRepository.getAppPreferences()
@@ -48,12 +48,11 @@ public class MainActivity extends AppCompatActivity {
                                     setNightMode(appPreferences.nightMode);
                                     if (!mPermissionChecker
                                             .hasWorkingDirPermission(appPreferences.workingDir)) {
-                                        navigator.navigate(Route.TO_PERMISSION);
+                                        mNavigator.navigate(Route.TO_PERMISSION);
                                     }
                                 }
                         )
         );
-        // TODO: try "NavigationUI.setupActionBarWithNavController(this,navController)"
     }
 
     @Override
@@ -67,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        navigator.setNavController(null);
+        mNavigator.setNavController(null);
         mDisposables.clear();
         super.onDestroy();
     }
@@ -81,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
                 case AppCompatDelegate.MODE_NIGHT_NO:
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                     break;
-                default:
+                default: // TODO: check and fix the case
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
                     break;
             }

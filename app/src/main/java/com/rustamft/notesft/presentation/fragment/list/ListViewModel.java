@@ -82,9 +82,9 @@ public class ListViewModel extends ViewModel {
     }
 
     public void promptCreation(View view) {
-        final Context context = view.getContext();
-        final View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
-        final EditText editText = dialogView.findViewById(R.id.edittext_dialog);
+        Context context = view.getContext();
+        View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
+        EditText editText = dialogView.findViewById(R.id.edittext_dialog);
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_new)
                 .setView(dialogView)
@@ -106,9 +106,9 @@ public class ListViewModel extends ViewModel {
 
     public void promptDeletion(Context context, int noteIndex) {
         if (mNoteNameListLiveData.getValue() == null) return;
-        final List<String> noteNameList = mNoteNameListLiveData.getValue();
-        final String noteName = noteNameList.get(noteIndex);
-        final String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
+        List<String> noteNameList = mNoteNameListLiveData.getValue();
+        String noteName = noteNameList.get(noteIndex);
+        String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
         new AlertDialog.Builder(context)
                 .setTitle(R.string.please_confirm)
                 .setMessage(message)

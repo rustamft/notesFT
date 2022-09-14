@@ -21,7 +21,6 @@
     <string name="action_rename">Rename</string>
     <string name="action_save">Save</string>
     <string name="action_yes">Yes</string>
-    <string name="app_name" translatable="false">notesFT</string>
     <string name="are_you_sure_change_dir">Are you sure you wish to change working directory?</string>
     <string name="are_you_sure_delete">Are you sure you wish to delete</string>
     <string name="choose_directory">Choose directory</string>
