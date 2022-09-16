@@ -2,7 +2,6 @@ package com.rustamft.notesft.presentation.fragment.editor;
 
 import android.content.Context;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 
 import androidx.appcompat.app.ActionBar;
@@ -14,10 +13,11 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
-import com.rustamft.notesft.domain.Constants;
+import com.rustamft.notesft.app.App;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
+import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.presentation.model.ObservableNote;
 import com.rustamft.notesft.presentation.navigation.Navigator;
 import com.rustamft.notesft.presentation.time.TimeConverter;
@@ -50,7 +50,7 @@ public class EditorViewModel extends ViewModel {
         mNoteRepository = noteRepository;
         mToastDisplay = toastDisplay;
         mNavigator = navigator;
-        String noteName = state.get(Constants.NOTE_NAME);
+        String noteName = state.get(Constants.KEY_NOTE_NAME);
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
             mDisposables.add(
@@ -103,14 +103,7 @@ public class EditorViewModel extends ViewModel {
         );
     }
 
-    public void onEditTextChanged(View view) {
-        if (view.getVisibility() == View.GONE &&
-                Boolean.TRUE.equals(observableNote.textChangedByUser.get())) {
-            animateFadeIn(view);
-        }
-    }
-
-    public void promptRename(View view) { // TODO: fix text changes cleared after renaming
+    public void promptRename(View view) {
         Note note = observableNote.note.get();
         if (note == null) return;
         Context context = view.getContext();
@@ -189,7 +182,7 @@ public class EditorViewModel extends ViewModel {
      * Sets the app name to the ActionBar title.
      */
     private void resetActionBarTitle() {
-        mActionBarTitle.setValue(Constants.APP_NAME);
+        mActionBarTitle.setValue(App.NAME);
     }
 
     private void promptUnsavedText(View view) {
@@ -209,17 +202,5 @@ public class EditorViewModel extends ViewModel {
                     mNavigator.popBackStack();
                 })
                 .show();
-    }
-
-    private void animateFadeIn(View view) {
-        boolean fadeIn = view.getVisibility() != View.VISIBLE;
-        if (fadeIn) {
-            view.setVisibility(View.VISIBLE);
-        }
-        AlphaAnimation fadeAnimation = new AlphaAnimation((float) 0.0, (float) 1.0);
-        fadeAnimation.setDuration(500);
-        view.startAnimation(fadeAnimation);
-        // If fading out, hide the view after animation is ended.
-        if (!fadeIn) view.postDelayed(() -> view.setVisibility(View.GONE), 500);
     }
 }

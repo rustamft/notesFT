@@ -16,7 +16,7 @@ import androidx.navigation.Navigation;
 
 import com.rustamft.notesft.BuildConfig;
 import com.rustamft.notesft.R;
-import com.rustamft.notesft.domain.Constants;
+import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
@@ -166,7 +166,7 @@ public class ListViewModel extends ViewModel {
     private void navigateBackToWorkingDirChoosing(View view) {
         NavController navController = Navigation.findNavController(view);
         Bundle bundle = new Bundle();
-        bundle.putBoolean(Constants.CHOOSE_WORKING_DIR_IMMEDIATELY, true);
+        bundle.putBoolean(Constants.KEY_CHOOSE_WORKING_DIR_IMMEDIATELY, true);
         navController.navigate(R.id.action_listFragment_to_permissionFragment, bundle);
     }
 

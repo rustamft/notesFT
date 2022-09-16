@@ -1,6 +1,6 @@
 package com.rustamft.notesft.presentation.time;
 
-import com.rustamft.notesft.domain.Constants;
+import com.rustamft.notesft.presentation.constant.Constants;
 
 import java.time.Instant;
 import java.time.ZoneId;

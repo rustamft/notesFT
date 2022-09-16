@@ -5,7 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.navigation.NavController;
 
-import com.rustamft.notesft.domain.Constants;
+import com.rustamft.notesft.presentation.constant.Constants;
 
 public class Navigator {
 
@@ -24,7 +24,7 @@ public class Navigator {
             Bundle args = null;
             if (noteName != null) {
                 args = new Bundle();
-                args.putString(Constants.NOTE_NAME, noteName);
+                args.putString(Constants.KEY_NOTE_NAME, noteName);
             }
             mNavController.navigate(route.resId, args);
         }

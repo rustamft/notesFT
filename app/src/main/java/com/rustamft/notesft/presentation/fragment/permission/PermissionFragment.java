@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.rustamft.notesft.databinding.FragmentPermissionBinding;
 import com.rustamft.notesft.presentation.permission.BetterActivityResult;
-import com.rustamft.notesft.domain.Constants;
+import com.rustamft.notesft.presentation.constant.Constants;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -48,7 +48,7 @@ public class PermissionFragment extends Fragment {
         // Register this fragment to receive the requestPermission result
         mActivityLauncher = BetterActivityResult.registerActivityForResult(this);
         Bundle arguments = getArguments();
-        if (arguments != null && arguments.getBoolean(Constants.CHOOSE_WORKING_DIR_IMMEDIATELY)) {
+        if (arguments != null && arguments.getBoolean(Constants.KEY_CHOOSE_WORKING_DIR_IMMEDIATELY)) {
             // If it is dir changing from the list fragment
             chooseWorkingDir();
         }

@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 
 import com.rustamft.notesft.data.model.AppPreferencesDataModel;
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
-import com.rustamft.notesft.domain.Constants;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -15,9 +14,12 @@ import io.reactivex.rxjava3.core.Single;
 public class AppPreferencesSharedStorage implements AppPreferencesStorage {
 
     private final SharedPreferences mSharedPreferences;
+    private static final String SHARED_PREFS_FILE_NAME = "com.rustamft.notesft.shared_preferences";
+    private static final String KEY_NIGHT_MODE = "night_mode";
+    public static final String KEY_WORKING_DIR = "working_dir";
 
     public AppPreferencesSharedStorage(Context context) {
-        mSharedPreferences = context.getSharedPreferences(Constants.SHARED_PREF_FILE, MODE_PRIVATE);
+        mSharedPreferences = context.getSharedPreferences(SHARED_PREFS_FILE_NAME, MODE_PRIVATE);
     }
 
     @Override
@@ -25,8 +27,8 @@ public class AppPreferencesSharedStorage implements AppPreferencesStorage {
         return Single.create(emitter -> {
                     mSharedPreferences
                             .edit()
-                            .putInt(Constants.NIGHT_MODE, appPreferences.nightMode)
-                            .putString(Constants.WORKING_DIR, appPreferences.workingDir)
+                            .putInt(KEY_NIGHT_MODE, appPreferences.nightMode)
+                            .putString(KEY_WORKING_DIR, appPreferences.workingDir)
                             .apply();
                     if (!emitter.isDisposed()) {
                         emitter.onSuccess(true);
@@ -41,8 +43,8 @@ public class AppPreferencesSharedStorage implements AppPreferencesStorage {
             if (!emitter.isDisposed()) {
                 emitter.onNext(
                         new AppPreferencesDataModel(
-                                mSharedPreferences.getInt(Constants.NIGHT_MODE, 0),
-                                mSharedPreferences.getString(Constants.WORKING_DIR, null)
+                                mSharedPreferences.getInt(KEY_NIGHT_MODE, 0),
+                                mSharedPreferences.getString(KEY_WORKING_DIR, null)
                         )
                 );
             }
@@ -50,8 +52,8 @@ public class AppPreferencesSharedStorage implements AppPreferencesStorage {
                 if (!emitter.isDisposed()) {
                     emitter.onNext(
                             new AppPreferencesDataModel(
-                                    sharedPreferences.getInt(Constants.NIGHT_MODE, 0),
-                                    sharedPreferences.getString(Constants.WORKING_DIR, null)
+                                    sharedPreferences.getInt(KEY_NIGHT_MODE, 0),
+                                    sharedPreferences.getString(KEY_WORKING_DIR, null)
                             )
                     );
                 }

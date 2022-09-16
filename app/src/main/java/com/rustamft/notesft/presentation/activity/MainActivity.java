@@ -71,17 +71,17 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    private void setNightMode(int nightMode) {
-        if (AppCompatDelegate.getDefaultNightMode() != nightMode) {
-            switch (nightMode) { // To fix IDE complains about non-constant value
+    private void setNightMode(int mode) {
+        if (AppCompatDelegate.getDefaultNightMode() != mode) {
+            switch (mode) { // To fix IDE complains about non-constant value
                 case AppCompatDelegate.MODE_NIGHT_YES:
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                     break;
                 case AppCompatDelegate.MODE_NIGHT_NO:
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                     break;
-                default: // TODO: check and fix the case
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
+                default:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
                     break;
             }
         }
