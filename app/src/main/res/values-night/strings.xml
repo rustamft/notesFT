@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="switch_night_mode">Switch to light theme</string>
+    <string name="night_mode_switch">Switch to light theme</string>
 </resources>

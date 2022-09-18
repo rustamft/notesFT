@@ -16,11 +16,11 @@ import androidx.navigation.Navigation;
 
 import com.rustamft.notesft.BuildConfig;
 import com.rustamft.notesft.R;
-import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
+import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.presentation.navigation.Navigator;
 import com.rustamft.notesft.presentation.navigation.Route;
 import com.rustamft.notesft.presentation.toast.ToastDisplay;
@@ -81,7 +81,7 @@ public class ListViewModel extends ViewModel {
         super.onCleared();
     }
 
-    public void promptCreation(View view) {
+    public void promptNoteCreation(View view) {
         Context context = view.getContext();
         View dialogView = View.inflate(context, R.layout.dialog_edittext, null);
         EditText editText = dialogView.findViewById(R.id.edittext_dialog);
@@ -118,29 +118,27 @@ public class ListViewModel extends ViewModel {
     }
 
     protected void switchNightMode() {
-        if (mAppPreferencesLiveData.getValue() == null) return;
-        int nightMode = AppCompatDelegate.getDefaultNightMode();
-        if (nightMode != AppCompatDelegate.MODE_NIGHT_YES) {
-            nightMode = AppCompatDelegate.MODE_NIGHT_YES;
-        } else {
-            nightMode = AppCompatDelegate.MODE_NIGHT_NO;
-        }
-        if (mAppPreferencesLiveData.getValue().workingDir.isEmpty()) {
+        AppPreferences appPreferences = mAppPreferencesLiveData.getValue();
+        if (appPreferences == null || appPreferences.workingDir.isEmpty()) {
             mToastDisplay.showLong(R.string.something_went_wrong);
             return;
         }
-        AppPreferences.CopyBuilder appPreferencesCopyBuilder =
-                mAppPreferencesLiveData.getValue().copyBuilder();
-        appPreferencesCopyBuilder.setNightMode(nightMode);
-        AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
+        AppPreferences.CopyBuilder appPreferencesCopyBuilder = mAppPreferencesLiveData
+                .getValue()
+                .copyBuilder();
+        appPreferencesCopyBuilder.setNightMode(nextNightModeBy(
+                AppCompatDelegate.getDefaultNightMode()
+        ));
+        final AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
         mDisposables.add(
                 mAppPreferencesRepository.saveAppPreferences(appPreferencesCopy)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 success -> {
-                                    if (success) AppCompatDelegate.setDefaultNightMode(
-                                            appPreferencesCopy.nightMode
-                                    );
+                                    if (success) {
+                                        AppCompatDelegate
+                                                .setDefaultNightMode(appPreferencesCopy.nightMode);
+                                    }
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
@@ -189,8 +187,9 @@ public class ListViewModel extends ViewModel {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 success -> {
-                                    if (success)
+                                    if (success) {
                                         mNavigator.navigate(Route.LIST_TO_EDITOR, noteName);
+                                    }
                                 },
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
@@ -211,6 +210,18 @@ public class ListViewModel extends ViewModel {
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
+    }
+
+    private int nextNightModeBy(int mode) {
+        switch (mode) {
+            case AppCompatDelegate.MODE_NIGHT_YES:
+                return AppCompatDelegate.MODE_NIGHT_NO;
+            case AppCompatDelegate.MODE_NIGHT_NO:
+                mToastDisplay.showShort(R.string.night_mode_auto);
+                return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+            default:
+                return AppCompatDelegate.MODE_NIGHT_YES;
+        }
     }
 
     private void openGitHub(Context context) {

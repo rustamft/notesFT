@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/margin_fab"
             android:contentDescription="@string/action_add"
-            android:onClick="@{(view) -> viewModel.promptCreation(view)}"
+            android:onClick="@{(view) -> viewModel.promptNoteCreation(view)}"
             android:src="@drawable/ic_add"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toRightOf="parent"

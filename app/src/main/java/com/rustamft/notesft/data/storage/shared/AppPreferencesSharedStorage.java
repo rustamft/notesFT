@@ -48,16 +48,6 @@ public class AppPreferencesSharedStorage implements AppPreferencesStorage {
                         )
                 );
             }
-            mSharedPreferences.registerOnSharedPreferenceChangeListener((sharedPreferences, s) -> {
-                if (!emitter.isDisposed()) {
-                    emitter.onNext(
-                            new AppPreferencesDataModel(
-                                    sharedPreferences.getInt(KEY_NIGHT_MODE, 0),
-                                    sharedPreferences.getString(KEY_WORKING_DIR, null)
-                            )
-                    );
-                }
-            });
         });
     }
 }
