@@ -44,7 +44,7 @@ public class NoteRepositoryImpl implements NoteRepository {
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<List<String>> getNoteNameList(String workingDir) {
+    public Observable<List<String>> getNoteList(String workingDir) {
         return mNoteStorage.getNameList(workingDir).subscribeOn(Schedulers.io());
     }
 

@@ -37,6 +37,7 @@
     <string name="note_new">Новая заметка</string>
     <string name="note_rename">Переименовать заметку</string>
     <string name="note_same_name_exists">Заметка с таким же названием уже существует!</string>
+    <string name="note_search">Поиск заметки</string>
 
     <string name="please_confirm">Подтвердите, пожалуйста</string>
 

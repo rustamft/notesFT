@@ -58,7 +58,7 @@ public class ListFragment extends Fragment {
                 Lifecycle.State.RESUMED
         );
         mBinding.setViewModel(mViewModel);
-        mBinding.recyclerviewList.setAdapter(mViewModel.noteNameListAdapter);
+        mBinding.recyclerviewList.setAdapter(mViewModel.noteListAdapter);
         registerForContextMenu(mBinding.recyclerviewList);
     }
 
@@ -88,10 +88,18 @@ public class ListFragment extends Fragment {
 
         @Override
         public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+            final int ACTION_SEARCH_NOTE_ID = R.id.action_search_note;
             final int ACTION_CHOOSE_DIR_ID = R.id.action_choose_dir;
             final int ACTION_SWITCH_DARK_ID = R.id.action_switch_night;
             final int ACTION_ABOUT_APP_ID = R.id.action_about_app;
             switch (menuItem.getItemId()) {
+                case ACTION_SEARCH_NOTE_ID:
+                    if (mBinding.edittextSearchNote.getVisibility() == View.GONE) {
+                        mBinding.edittextSearchNote.setVisibility(View.VISIBLE);
+                    } else {
+                        mBinding.edittextSearchNote.setVisibility(View.GONE);
+                    }
+                    return true;
                 case ACTION_CHOOSE_DIR_ID:
                     mViewModel.promptNavigateBack(requireView());
                     return true;

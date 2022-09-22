@@ -37,6 +37,7 @@
     <string name="note_new">New note</string>
     <string name="note_rename">Rename note</string>
     <string name="note_same_name_exists">The same name note already exists!</string>
+    <string name="note_search">Search note</string>
 
     <string name="please_confirm">Please confirm</string>
 

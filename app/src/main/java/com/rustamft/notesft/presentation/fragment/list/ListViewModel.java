@@ -21,6 +21,7 @@ import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
 import com.rustamft.notesft.presentation.constant.Constants;
+import com.rustamft.notesft.presentation.model.NoteList;
 import com.rustamft.notesft.presentation.navigation.Navigator;
 import com.rustamft.notesft.presentation.navigation.Route;
 import com.rustamft.notesft.presentation.toast.ToastDisplay;
@@ -39,14 +40,14 @@ import io.reactivex.rxjava3.functions.Function;
 @HiltViewModel
 public class ListViewModel extends ViewModel {
 
-    public final NoteListAdapter noteNameListAdapter;
+    public final NoteList noteList;
+    public final NoteListAdapter noteListAdapter;
     private final AppPreferencesRepository mAppPreferencesRepository;
     private final NoteRepository mNoteRepository;
     private final ToastDisplay mToastDisplay;
     private final Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
-    private final MutableLiveData<List<String>> mNoteNameListLiveData = new MutableLiveData<>();
 
     @Inject
     ListViewModel(
@@ -59,16 +60,18 @@ public class ListViewModel extends ViewModel {
         mNoteRepository = noteRepository;
         mToastDisplay = toastDisplay;
         mNavigator = navigator;
-        noteNameListAdapter = new NoteListAdapter(navigator, mNoteNameListLiveData);
+        MutableLiveData<List<String>> listLiveData = new MutableLiveData<>();
+        noteList = new NoteList(listLiveData);
+        noteListAdapter = new NoteListAdapter(navigator, noteList.getFilteredLiveData());
         mDisposables.add(
                 mAppPreferencesRepository.getAppPreferences()
                         .flatMap(appPreferences -> {
                             mAppPreferencesLiveData.postValue(appPreferences);
-                            return mNoteRepository.getNoteNameList(appPreferences.workingDir);
+                            return mNoteRepository.getNoteList(appPreferences.workingDir);
                         })
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                mNoteNameListLiveData::postValue,
+                                listLiveData::postValue,
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
@@ -77,7 +80,8 @@ public class ListViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         mDisposables.clear();
-        noteNameListAdapter.clear();
+        noteListAdapter.clear();
+        noteList.clear();
         super.onCleared();
     }
 
@@ -105,9 +109,9 @@ public class ListViewModel extends ViewModel {
     }
 
     public void promptDeletion(Context context, int noteIndex) {
-        if (mNoteNameListLiveData.getValue() == null) return;
-        List<String> noteNameList = mNoteNameListLiveData.getValue();
-        String noteName = noteNameList.get(noteIndex);
+        List<String> noteList = this.noteList.getFilteredLiveData().getValue();
+        if (noteList == null) return;
+        String noteName = noteList.get(noteIndex);
         String message = context.getString(R.string.are_you_sure_delete) + " «" + noteName + "»?";
         new AlertDialog.Builder(context)
                 .setTitle(R.string.please_confirm)

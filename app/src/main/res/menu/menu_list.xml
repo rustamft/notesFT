@@ -5,6 +5,12 @@
     tools:context="com.example.notesft.screens.list.ListFragment">
 
     <item
+        android:id="@+id/action_search_note"
+        android:icon="@drawable/ic_search"
+        android:orderInCategory="1"
+        android:title="@string/note_search"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_choose_dir"
         android:icon="@drawable/ic_folder"
         android:orderInCategory="2"

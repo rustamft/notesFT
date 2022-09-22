@@ -17,5 +17,5 @@ public interface NoteRepository {
 
     Single<Note> getNote(String noteName, String workingDir);
 
-    Observable<List<String>> getNoteNameList(String workingDir);
+    Observable<List<String>> getNoteList(String workingDir);
 }
