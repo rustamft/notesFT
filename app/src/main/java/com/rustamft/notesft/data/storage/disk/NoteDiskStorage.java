@@ -131,38 +131,23 @@ public class NoteDiskStorage implements NoteStorage {
 
     @Override
     public Observable<List<String>> getNameList(String workingDir) {
-        List<String> fileList = new ArrayList<>();
-        return Observable.interval(1, TimeUnit.SECONDS)
-                .flatMap(aLong -> {
-                    List<String> newFileList = new ArrayList<>();
-                    Cursor newCursor = buildCursor(buildChildrenUri(workingDir));
-                    String name, mime;
-                    while (newCursor.moveToNext()) {
-                        name = newCursor.getString(0);
-                        mime = newCursor.getString(1);
-                        if (!mime.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
-                            newFileList.add(name);
-                        }
-                    }
-                    newCursor.close();
-                    Collections.sort(newFileList);
-                    if (newFileList.equals(fileList)) {
-                        return Observable.empty();
-                    } else {
-                        fileList.clear();
-                        fileList.addAll(newFileList);
-                        return Observable.just(newFileList);
-                    }
-                });
+        final List<String> nameList = new ArrayList<>();
+        return Observable.interval(2, TimeUnit.SECONDS).flatMap(aLong -> {
+            List<String> newNameList = buildNameList(workingDir);
+            if (newNameList.equals(nameList)) {
+                return Observable.empty();
+            } else {
+                nameList.clear();
+                nameList.addAll(newNameList);
+                return Observable.just(newNameList);
+            }
+        });
     }
 
     private DocumentFile buildDocumentFile(String workingDir, String name) {
-        Uri basePathUri = Uri.parse(workingDir);
-        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-                basePathUri,
-                DocumentsContract.getTreeDocumentId(basePathUri)
-        );
-        String extPath = childrenUri.toString().replace("/children", "%2F");
+        String extPath = buildChildrenUri(workingDir)
+                .toString()
+                .replace("/children", "%2F");
         Uri fileUri = Uri.parse(extPath + name);
         return DocumentFile.fromSingleUri(mContext, fileUri);
     }
@@ -205,6 +190,22 @@ public class NoteDiskStorage implements NoteStorage {
                 null,
                 null
         );
+    }
+
+    private List<String> buildNameList(String workingDir) {
+        List<String> nameList = new ArrayList<>();
+        Cursor newCursor = buildCursor(buildChildrenUri(workingDir));
+        String name, mime;
+        while (newCursor.moveToNext()) {
+            name = newCursor.getString(0);
+            mime = newCursor.getString(1);
+            if (!mime.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
+                nameList.add(name);
+            }
+        }
+        newCursor.close();
+        Collections.sort(nameList);
+        return nameList;
     }
 
     private boolean writeIntoExisting(NoteDataModel note) throws IOException {
