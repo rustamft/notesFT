@@ -1,5 +1,7 @@
 package com.rustamft.notesft.presentation.fragment.list;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -7,6 +9,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -98,11 +101,33 @@ public class ListFragment extends Fragment {
             final int ACTION_ABOUT_APP_ID = R.id.action_about_app;
             switch (menuItem.getItemId()) {
                 case ACTION_SEARCH_NOTE_ID:
-                    if (mBinding.edittextSearchNote.getVisibility() == View.GONE) {
-                        mBinding.edittextSearchNote.setVisibility(View.VISIBLE);
+                    EditText view = mBinding.edittextSearchNote;
+                    if (view.getVisibility() == View.GONE) {
+                        view.setVisibility(View.VISIBLE);
+                        view.animate()
+                                .translationY(0)
+                                .alpha(1.0f)
+                                .setDuration(300)
+                                .setListener(new AnimatorListenerAdapter() {
+                                    @Override
+                                    public void onAnimationEnd(Animator animation) {
+                                        super.onAnimationEnd(animation);
+                                        view.setVisibility(View.VISIBLE);
+                                    }
+                                });
                     } else {
-                        mBinding.edittextSearchNote.setVisibility(View.GONE);
-                        mBinding.edittextSearchNote.setText("");
+                        view.setText("");
+                        view.animate()
+                                .translationY(-view.getHeight())
+                                .alpha(0.0f)
+                                .setDuration(300)
+                                .setListener(new AnimatorListenerAdapter() {
+                                    @Override
+                                    public void onAnimationEnd(Animator animation) {
+                                        super.onAnimationEnd(animation);
+                                        view.setVisibility(View.GONE);
+                                    }
+                                });
                     }
                     return true;
                 case ACTION_CHOOSE_DIR_ID:
