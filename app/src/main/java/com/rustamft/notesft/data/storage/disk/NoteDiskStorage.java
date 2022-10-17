@@ -132,7 +132,7 @@ public class NoteDiskStorage implements NoteStorage {
     @Override
     public Observable<List<String>> getNameList(String workingDir) {
         final List<String> nameList = new ArrayList<>();
-        return Observable.interval(2, TimeUnit.SECONDS).flatMap(aLong -> {
+        return Observable.interval(0, 2, TimeUnit.SECONDS).flatMap(aLong -> {
             List<String> newNameList = buildNameList(workingDir);
             if (newNameList.equals(nameList)) {
                 return Observable.empty();

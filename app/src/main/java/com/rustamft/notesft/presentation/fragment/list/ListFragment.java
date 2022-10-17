@@ -59,6 +59,10 @@ public class ListFragment extends Fragment {
         );
         mBinding.setViewModel(mViewModel);
         mBinding.recyclerviewList.setAdapter(mViewModel.noteListAdapter);
+        String noteListFilter = mViewModel.noteList.filter.getValue();
+        if (noteListFilter != null && !noteListFilter.isEmpty()) {
+            mBinding.edittextSearchNote.setVisibility(View.VISIBLE);
+        }
         registerForContextMenu(mBinding.recyclerviewList);
     }
 
@@ -98,6 +102,7 @@ public class ListFragment extends Fragment {
                         mBinding.edittextSearchNote.setVisibility(View.VISIBLE);
                     } else {
                         mBinding.edittextSearchNote.setVisibility(View.GONE);
+                        mBinding.edittextSearchNote.setText("");
                     }
                     return true;
                 case ACTION_CHOOSE_DIR_ID:
