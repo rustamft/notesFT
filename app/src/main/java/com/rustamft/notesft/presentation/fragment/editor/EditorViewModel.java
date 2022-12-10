@@ -9,7 +9,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
-import androidx.lifecycle.ViewModel;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rustamft.notesft.R;
@@ -20,6 +19,7 @@ import com.rustamft.notesft.domain.repository.NoteRepository;
 import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.presentation.model.ObservableNote;
 import com.rustamft.notesft.presentation.navigation.Navigator;
+import com.rustamft.notesft.presentation.base.BaseViewModel;
 import com.rustamft.notesft.presentation.time.TimeConverter;
 import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
@@ -27,16 +27,11 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
-public class EditorViewModel extends ViewModel {
+public class EditorViewModel extends BaseViewModel {
 
     public final ObservableNote observableNote = new ObservableNote();
-    private final NoteRepository mNoteRepository;
-    private final ToastDisplay mToastDisplay;
-    private final Navigator mNavigator;
-    private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<String> mActionBarTitle = new MutableLiveData<>();
 
     @Inject
@@ -53,7 +48,7 @@ public class EditorViewModel extends ViewModel {
         String noteName = state.get(Constants.KEY_NOTE_NAME);
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
-            mDisposables.add(
+            disposeLater(
                     appPreferencesRepository.getAppPreferences()
                             .firstOrError()
                             .flatMap(appPreferences -> mNoteRepository.getNote(
@@ -71,9 +66,8 @@ public class EditorViewModel extends ViewModel {
 
     @Override
     protected void onCleared() {
-        resetActionBarTitle();
-        mDisposables.clear();
         super.onCleared();
+        resetActionBarTitle();
     }
 
     /**
@@ -83,7 +77,9 @@ public class EditorViewModel extends ViewModel {
         View view = (View) fab.getParent();
         if (fab.getVisibility() == View.VISIBLE) {
             promptUnsavedText(view);
-        } else mNavigator.popBackStack();
+        } else {
+            mNavigator.popBackStack();
+        }
     }
 
     public void onNoteSave(EditText editText) {
@@ -91,7 +87,7 @@ public class EditorViewModel extends ViewModel {
         if (note == null) return;
         Note.CopyBuilder noteCopyBuilder = note.copyBuilder();
         noteCopyBuilder.setText(editText.getText().toString());
-        mDisposables.add(
+        disposeLater(
                 mNoteRepository.saveNote(
                                 noteCopyBuilder.build()
                         )
@@ -113,7 +109,7 @@ public class EditorViewModel extends ViewModel {
         new AlertDialog.Builder(context)
                 .setTitle(R.string.note_rename)
                 .setView(dialogView)
-                .setPositiveButton(R.string.action_apply, ((dialog, which) -> mDisposables.add(
+                .setPositiveButton(R.string.action_apply, ((dialog, which) -> disposeLater(
                         mNoteRepository.renameNote(
                                         note,
                                         editText.getText().toString()

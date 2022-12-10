@@ -6,27 +6,22 @@ import android.net.Uri;
 import android.view.View;
 
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
-import com.rustamft.notesft.presentation.toast.ToastDisplay;
+import com.rustamft.notesft.presentation.base.BaseViewModel;
 import com.rustamft.notesft.presentation.navigation.Navigator;
 import com.rustamft.notesft.presentation.navigation.Route;
+import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 @HiltViewModel
-public class PermissionViewModel extends ViewModel {
+public class PermissionViewModel extends BaseViewModel {
 
-    private final AppPreferencesRepository mAppPreferencesRepository;
-    private final ToastDisplay mToastDisplay;
-    private final Navigator mNavigator;
-    private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferences = new MutableLiveData<>();
 
     @Inject
@@ -38,16 +33,9 @@ public class PermissionViewModel extends ViewModel {
         mAppPreferencesRepository = appPreferencesRepository;
         mToastDisplay = toastDisplay;
         mNavigator = navigator;
-        mDisposables.add(
-                mAppPreferencesRepository.getAppPreferences()
-                        .subscribe(mAppPreferences::postValue)
+        disposeLater(
+                mAppPreferencesRepository.getAppPreferences().subscribe(mAppPreferences::postValue)
         );
-    }
-
-    @Override
-    protected void onCleared() {
-        mDisposables.clear();
-        super.onCleared();
     }
 
     protected void saveWorkingDirPreference(Intent resultData, View view) {
@@ -58,7 +46,7 @@ public class PermissionViewModel extends ViewModel {
         AppPreferences.CopyBuilder appPreferencesCopyBuilder =
                 mAppPreferences.getValue().copyBuilder();
         appPreferencesCopyBuilder.setWorkingDir(workingDirUri.toString());
-        mDisposables.add(
+        disposeLater(
                 mAppPreferencesRepository.saveAppPreferences(
                                 appPreferencesCopyBuilder.build()
                         )

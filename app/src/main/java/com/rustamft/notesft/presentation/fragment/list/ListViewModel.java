@@ -10,7 +10,6 @@ import android.widget.EditText;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
@@ -24,6 +23,7 @@ import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.presentation.model.NoteList;
 import com.rustamft.notesft.presentation.navigation.Navigator;
 import com.rustamft.notesft.presentation.navigation.Route;
+import com.rustamft.notesft.presentation.base.BaseViewModel;
 import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
 import java.util.List;
@@ -34,19 +34,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
-import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Function;
 
 @HiltViewModel
-public class ListViewModel extends ViewModel {
+public class ListViewModel extends BaseViewModel {
 
     public final NoteList noteList;
     public final NoteListAdapter noteListAdapter;
-    private final AppPreferencesRepository mAppPreferencesRepository;
-    private final NoteRepository mNoteRepository;
-    private final ToastDisplay mToastDisplay;
-    private final Navigator mNavigator;
-    private final CompositeDisposable mDisposables = new CompositeDisposable();
     private final MutableLiveData<AppPreferences> mAppPreferencesLiveData = new MutableLiveData<>();
 
     @Inject
@@ -63,7 +57,7 @@ public class ListViewModel extends ViewModel {
         MutableLiveData<List<String>> listLiveData = new MutableLiveData<>();
         noteList = new NoteList(listLiveData);
         noteListAdapter = new NoteListAdapter(navigator, noteList.getFilteredLiveData());
-        mDisposables.add(
+        disposeLater(
                 mAppPreferencesRepository.getAppPreferences()
                         .flatMap(appPreferences -> {
                             mAppPreferencesLiveData.postValue(appPreferences);
@@ -79,10 +73,9 @@ public class ListViewModel extends ViewModel {
 
     @Override
     protected void onCleared() {
-        mDisposables.clear();
+        super.onCleared();
         noteListAdapter.clear();
         noteList.clear();
-        super.onCleared();
     }
 
     public void promptNoteCreation(View view) {
@@ -134,7 +127,7 @@ public class ListViewModel extends ViewModel {
                 AppCompatDelegate.getDefaultNightMode()
         ));
         final AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
-        mDisposables.add(
+        disposeLater(
                 mAppPreferencesRepository.saveAppPreferences(appPreferencesCopy)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -174,7 +167,7 @@ public class ListViewModel extends ViewModel {
 
     private void createNote(String noteName) {
         if (mAppPreferencesLiveData.getValue() == null) return;
-        mDisposables.add(
+        disposeLater(
                 mNoteRepository.getNote(
                                 noteName,
                                 mAppPreferencesLiveData.getValue().workingDir
@@ -202,7 +195,7 @@ public class ListViewModel extends ViewModel {
 
     private void deleteNote(String noteName) {
         if (mAppPreferencesLiveData.getValue() == null) return;
-        mDisposables.add(
+        disposeLater(
                 mNoteRepository.getNote(
                                 noteName,
                                 mAppPreferencesLiveData.getValue().workingDir
