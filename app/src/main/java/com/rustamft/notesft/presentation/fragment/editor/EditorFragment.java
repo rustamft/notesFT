@@ -1,12 +1,10 @@
 package com.rustamft.notesft.presentation.fragment.editor;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -14,75 +12,86 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuProvider;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.FragmentEditorBinding;
+import com.rustamft.notesft.presentation.base.BaseFragment;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class EditorFragment extends Fragment {
+public class EditorFragment extends BaseFragment<EditorViewModel, FragmentEditorBinding> {
 
-    private EditorViewModel mViewModel;
-    private FragmentEditorBinding mBinding;
     private OnBackPressedCallback mOnBackPressed;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mViewModel = new ViewModelProvider(this).get(EditorViewModel.class);
-    }
-
-    @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState
-    ) {
-        // Enable ActionBar back button
-        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-        mBinding = FragmentEditorBinding.inflate(inflater, container, false);
-        return mBinding.getRoot();
-    }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        AppCompatActivity activity = (AppCompatActivity) requireActivity();
-        activity.addMenuProvider(
-                new EditorMenuProvider(),
-                getViewLifecycleOwner(),
-                Lifecycle.State.RESUMED
-        );
-        mBinding.setViewModel(mViewModel);
-        // Callback to modify PopUp (back) action behavior
+        enableActionBarButton();
+        enableMenu();
+        initBindings();
+        createBackButtonCallback();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        enableBackButtonCallback();
+    }
+
+    @Override
+    public void onDestroyView() {
+        disableBackButtonCallback();
+        super.onDestroyView();
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.fragment_editor;
+    }
+
+    @Override
+    protected EditorViewModel createViewModel() {
+        return new ViewModelProvider(this).get(EditorViewModel.class);
+    }
+
+    private void enableActionBarButton() {
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void createBackButtonCallback() {
         mOnBackPressed = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 mViewModel.onBackPressed(mBinding.fabSave);
             }
         };
-        mViewModel.registerActionBarTitleObserver(activity);
+        mViewModel.registerActionBarTitleObserver((AppCompatActivity) requireActivity());
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Modify PopUp (back) action behavior
+    private void enableBackButtonCallback() {
         requireActivity().getOnBackPressedDispatcher().addCallback(mOnBackPressed);
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    private void disableBackButtonCallback() {
         mOnBackPressed.remove();
-        mBinding = null;
+    }
+
+    private void enableMenu() {
+        requireActivity().addMenuProvider(
+                new EditorMenuProvider(),
+                getViewLifecycleOwner(),
+                Lifecycle.State.RESUMED
+        );
+    }
+
+    private void initBindings() {
+        mBinding.setViewModel(mViewModel);
     }
 
     private class EditorMenuProvider implements MenuProvider {

@@ -3,70 +3,35 @@ package com.rustamft.notesft.presentation.fragment.list;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.view.MenuProvider;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.FragmentListBinding;
 import com.rustamft.notesft.presentation.activity.MainActivity;
+import com.rustamft.notesft.presentation.base.BaseFragment;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class ListFragment extends Fragment {
-
-    private ListViewModel mViewModel;
-    private FragmentListBinding mBinding;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mViewModel = new ViewModelProvider(this).get(ListViewModel.class);
-    }
-
-    @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState
-    ) {
-        // Disable ActionBar back button
-        ActionBar actionBar = ((MainActivity) requireActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(false);
-        }
-        mBinding = FragmentListBinding.inflate(inflater, container, false);
-        return mBinding.getRoot();
-    }
+public class ListFragment extends BaseFragment<ListViewModel, FragmentListBinding> {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        requireActivity().addMenuProvider(
-                new ListMenuProvider(),
-                getViewLifecycleOwner(),
-                Lifecycle.State.RESUMED
-        );
-        mBinding.setViewModel(mViewModel);
-        mBinding.recyclerviewList.setAdapter(mViewModel.noteListAdapter);
-        String noteListFilter = mViewModel.noteList.filter.getValue();
-        if (noteListFilter != null && !noteListFilter.isEmpty()) {
-            mBinding.edittextSearchNote.setVisibility(View.VISIBLE);
-        }
-        registerForContextMenu(mBinding.recyclerviewList);
+        disableActionBarBackButton();
+        enableMenu();
+        initBindings();
     }
 
     @Override
@@ -82,8 +47,42 @@ public class ListFragment extends Fragment {
     @Override
     public void onDestroyView() {
         mBinding.recyclerviewList.setAdapter(null);
-        mBinding = null;
         super.onDestroyView();
+    }
+
+    @Override
+    public int getLayoutId() {
+        return R.layout.fragment_list;
+    }
+
+    @Override
+    protected ListViewModel createViewModel() {
+        return new ViewModelProvider(this).get(ListViewModel.class);
+    }
+
+    private void disableActionBarBackButton() {
+        ActionBar actionBar = ((MainActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(false);
+        }
+    }
+
+    private void enableMenu() {
+        requireActivity().addMenuProvider(
+                new ListMenuProvider(),
+                getViewLifecycleOwner(),
+                Lifecycle.State.RESUMED
+        );
+    }
+
+    private void initBindings() {
+        mBinding.setViewModel(mViewModel);
+        mBinding.recyclerviewList.setAdapter(mViewModel.noteListAdapter);
+        String noteListFilter = mViewModel.noteList.filter.getValue();
+        if (noteListFilter != null && !noteListFilter.isEmpty()) {
+            mBinding.edittextSearchNote.setVisibility(View.VISIBLE);
+        }
+        registerForContextMenu(mBinding.recyclerviewList);
     }
 
     private class ListMenuProvider implements MenuProvider {

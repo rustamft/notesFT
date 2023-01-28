@@ -3,49 +3,43 @@ package com.rustamft.notesft.presentation.fragment.permission;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.rustamft.notesft.R;
 import com.rustamft.notesft.databinding.FragmentPermissionBinding;
-import com.rustamft.notesft.presentation.permission.BetterActivityResult;
+import com.rustamft.notesft.presentation.base.BaseFragment;
 import com.rustamft.notesft.presentation.constant.Constants;
+import com.rustamft.notesft.presentation.permission.BetterActivityResult;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class PermissionFragment extends Fragment {
+public class PermissionFragment extends BaseFragment<PermissionViewModel, FragmentPermissionBinding> {
 
-    private PermissionViewModel mViewModel;
-    private FragmentPermissionBinding mBinding;
     private BetterActivityResult<Intent, ActivityResult> mActivityLauncher;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mViewModel = new ViewModelProvider(this).get(PermissionViewModel.class);
-    }
-
-    @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState
-    ) {
-        mBinding = FragmentPermissionBinding.inflate(inflater, container, false);
-        return mBinding.getRoot();
-    }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Register this fragment to receive the requestPermission result
+        registerActivityForResult();
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.fragment_permission;
+    }
+
+    @Override
+    protected PermissionViewModel createViewModel() {
+        return new ViewModelProvider(this).get(PermissionViewModel.class);
+    }
+
+    private void registerActivityForResult() {
         mActivityLauncher = BetterActivityResult.registerActivityForResult(this);
         Bundle arguments = getArguments();
         if (arguments != null && arguments.getBoolean(Constants.KEY_CHOOSE_WORKING_DIR_IMMEDIATELY)) {
@@ -53,12 +47,6 @@ public class PermissionFragment extends Fragment {
             chooseWorkingDir();
         }
         mBinding.buttonPermission.setOnClickListener(buttonView -> chooseWorkingDir());
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        mBinding = null;
     }
 
     private void chooseWorkingDir() {

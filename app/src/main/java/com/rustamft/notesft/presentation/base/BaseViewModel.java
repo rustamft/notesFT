@@ -1,5 +1,6 @@
 package com.rustamft.notesft.presentation.base;
 
+import androidx.annotation.CallSuper;
 import androidx.lifecycle.ViewModel;
 
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
@@ -11,7 +12,7 @@ import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 
-public class BaseViewModel extends ViewModel {
+public abstract class BaseViewModel extends ViewModel {
 
     protected AppPreferencesRepository mAppPreferencesRepository;
     protected NoteRepository mNoteRepository;
@@ -19,6 +20,7 @@ public class BaseViewModel extends ViewModel {
     protected Navigator mNavigator;
     private final CompositeDisposable mDisposables = new CompositeDisposable();
 
+    @CallSuper
     @Override
     protected void onCleared() {
         super.onCleared();
