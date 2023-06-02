@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 @AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
@@ -34,25 +35,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.nav_host);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host);
         if (navHostFragment != null) {
             NavController navController = navHostFragment.getNavController();
             mNavigator.setNavController(navController);
         }
-        mDisposables.add(
-                mAppPreferencesRepository.getAppPreferences()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                appPreferences -> {
-                                    setNightMode(appPreferences.nightMode);
-                                    if (!mPermissionChecker
-                                            .hasWorkingDirPermission(appPreferences.workingDir)) {
-                                        mNavigator.navigate(Route.TO_PERMISSION);
-                                    }
-                                }
-                        )
-        );
+        Disposable appPreferencesDisposable = mAppPreferencesRepository.observe()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(appPreferences -> {
+                    setNightMode(appPreferences.nightMode);
+                    if (!mPermissionChecker.hasWorkingDirPermission(appPreferences.workingDir)) {
+                        mNavigator.navigate(Route.TO_PERMISSION);
+                    }
+                });
+        mDisposables.add(appPreferencesDisposable);
     }
 
     @Override

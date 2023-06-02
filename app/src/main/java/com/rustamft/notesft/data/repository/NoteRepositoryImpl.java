@@ -7,6 +7,7 @@ import com.rustamft.notesft.domain.repository.NoteRepository;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -19,36 +20,31 @@ public class NoteRepositoryImpl implements NoteRepository {
         this.mNoteStorage = noteStorage;
     }
 
-    public Single<Boolean> saveNote(Note note) {
-        return mNoteStorage.save(convertForData(note))
+    public Completable save(Note note) {
+        return mNoteStorage.save(map(note)).subscribeOn(Schedulers.io());
+    }
+
+    public Completable delete(Note note) {
+        return mNoteStorage.delete(map(note)).subscribeOn(Schedulers.io());
+    }
+
+    public Single<Note> rename(Note note, String newName) {
+        return mNoteStorage.rename(map(note), newName)
+                .map(this::map)
                 .subscribeOn(Schedulers.io());
     }
 
-    public Single<Boolean> deleteNote(Note note) {
-        return mNoteStorage.delete(convertForData(note))
-                .subscribeOn(Schedulers.io());
-    }
-
-    public Single<Note> renameNote(Note note, String newName) {
-        return mNoteStorage.rename(
-                        convertForData(note),
-                        newName
-                )
-                .map(this::convertForDomain)
-                .subscribeOn(Schedulers.io());
-    }
-
-    public Single<Note> getNote(String noteName, String workingDir) {
+    public Single<Note> get(String noteName, String workingDir) {
         return mNoteStorage.get(noteName, workingDir)
-                .map(this::convertForDomain)
+                .map(this::map)
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<List<String>> getNoteList(String workingDir) {
-        return mNoteStorage.getNameList(workingDir).subscribeOn(Schedulers.io());
+    public Observable<List<String>> observeList(String workingDir) {
+        return mNoteStorage.observeNameList(workingDir).subscribeOn(Schedulers.io());
     }
 
-    private NoteDataModel convertForData(Note note) {
+    private NoteDataModel map(Note note) {
         return new NoteDataModel(
                 note.name,
                 note.text,
@@ -57,7 +53,7 @@ public class NoteRepositoryImpl implements NoteRepository {
         );
     }
 
-    public Note convertForDomain(NoteDataModel note) {
+    public Note map(NoteDataModel note) {
         return new Note(
                 note.name,
                 note.text,

@@ -49,9 +49,9 @@ public class EditorViewModel extends BaseViewModel {
         mActionBarTitle.setValue(noteName);
         if (isNotNullNorBlank(noteName)) {
             disposeLater(
-                    appPreferencesRepository.getAppPreferences()
+                    appPreferencesRepository.observe()
                             .firstOrError()
-                            .flatMap(appPreferences -> mNoteRepository.getNote(
+                            .flatMap(appPreferences -> mNoteRepository.get(
                                     noteName,
                                     appPreferences.workingDir
                             ))
@@ -88,12 +88,12 @@ public class EditorViewModel extends BaseViewModel {
         Note.CopyBuilder noteCopyBuilder = note.copyBuilder();
         noteCopyBuilder.setText(editText.getText().toString());
         disposeLater(
-                mNoteRepository.saveNote(
+                mNoteRepository.save(
                                 noteCopyBuilder.build()
                         )
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> mNavigator.popBackStack(),
+                                () -> mNavigator.popBackStack(),
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );
@@ -110,7 +110,7 @@ public class EditorViewModel extends BaseViewModel {
                 .setTitle(R.string.note_rename)
                 .setView(dialogView)
                 .setPositiveButton(R.string.action_apply, ((dialog, which) -> disposeLater(
-                        mNoteRepository.renameNote(
+                        mNoteRepository.rename(
                                         note,
                                         editText.getText().toString()
                                 )

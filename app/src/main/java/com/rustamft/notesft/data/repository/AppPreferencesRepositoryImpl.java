@@ -5,8 +5,8 @@ import com.rustamft.notesft.data.storage.AppPreferencesStorage;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
@@ -17,25 +17,24 @@ public class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
         mAppPreferencesStorage = appPreferencesStorage;
     }
 
-    public Single<Boolean> saveAppPreferences(AppPreferences appPreferences) {
-        return mAppPreferencesStorage.save(convertForData(appPreferences))
+    public Completable save(AppPreferences appPreferences) {
+        return mAppPreferencesStorage.save(map(appPreferences)).subscribeOn(Schedulers.io());
+    }
+
+    public Observable<AppPreferences> observe() {
+        return mAppPreferencesStorage.observe()
+                .map(this::map)
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<AppPreferences> getAppPreferences() {
-        return mAppPreferencesStorage.get()
-                .map(this::convertForDomain)
-                .subscribeOn(Schedulers.io());
-    }
-
-    private AppPreferencesDataModel convertForData(AppPreferences appPreferences) {
+    private AppPreferencesDataModel map(AppPreferences appPreferences) {
         return new AppPreferencesDataModel(
                 appPreferences.nightMode,
                 appPreferences.workingDir
         );
     }
 
-    private AppPreferences convertForDomain(AppPreferencesDataModel appPreferences) {
+    private AppPreferences map(AppPreferencesDataModel appPreferences) {
         return new AppPreferences(
                 appPreferences.nightMode,
                 appPreferences.workingDir

@@ -1,15 +1,15 @@
 package com.rustamft.notesft.data.storage.shared;
 
-import static android.content.Context.MODE_PRIVATE;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.rustamft.notesft.data.model.AppPreferencesDataModel;
 import com.rustamft.notesft.data.storage.AppPreferencesStorage;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class AppPreferencesSharedStorage implements AppPreferencesStorage {
 
@@ -23,22 +23,17 @@ public class AppPreferencesSharedStorage implements AppPreferencesStorage {
     }
 
     @Override
-    public Single<Boolean> save(AppPreferencesDataModel appPreferences) {
-        return Single.create(emitter -> {
-                    mSharedPreferences
-                            .edit()
-                            .putInt(KEY_NIGHT_MODE, appPreferences.nightMode)
-                            .putString(KEY_WORKING_DIR, appPreferences.workingDir)
-                            .apply();
-                    if (!emitter.isDisposed()) {
-                        emitter.onSuccess(true);
-                    }
-                }
+    public Completable save(AppPreferencesDataModel appPreferences) {
+        return Completable.fromAction(() -> mSharedPreferences
+                .edit()
+                .putInt(KEY_NIGHT_MODE, appPreferences.nightMode)
+                .putString(KEY_WORKING_DIR, appPreferences.workingDir)
+                .apply()
         );
     }
 
     @Override
-    public Observable<AppPreferencesDataModel> get() {
+    public Observable<AppPreferencesDataModel> observe() {
         return Observable.create(emitter -> {
             if (!emitter.isDisposed()) {
                 emitter.onNext(

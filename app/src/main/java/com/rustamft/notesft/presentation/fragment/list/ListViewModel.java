@@ -7,33 +7,32 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.lifecycle.MutableLiveData;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-
 import com.rustamft.notesft.BuildConfig;
 import com.rustamft.notesft.R;
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.model.Note;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.domain.repository.NoteRepository;
+import com.rustamft.notesft.presentation.base.BaseViewModel;
 import com.rustamft.notesft.presentation.constant.Constants;
 import com.rustamft.notesft.presentation.model.NoteList;
 import com.rustamft.notesft.presentation.navigation.Navigator;
 import com.rustamft.notesft.presentation.navigation.Route;
-import com.rustamft.notesft.presentation.base.BaseViewModel;
 import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.lifecycle.MutableLiveData;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.core.SingleSource;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Function;
 
 @HiltViewModel
@@ -57,18 +56,17 @@ public class ListViewModel extends BaseViewModel {
         MutableLiveData<List<String>> listLiveData = new MutableLiveData<>();
         noteList = new NoteList(listLiveData);
         noteListAdapter = new NoteListAdapter(navigator, noteList.getFilteredLiveData());
-        disposeLater(
-                mAppPreferencesRepository.getAppPreferences()
-                        .flatMap(appPreferences -> {
-                            mAppPreferencesLiveData.postValue(appPreferences);
-                            return mNoteRepository.getNoteList(appPreferences.workingDir);
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                listLiveData::postValue,
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
-        );
+        Disposable appPreferencesDisposable = mAppPreferencesRepository.observe()
+                .switchMap(appPreferences -> {
+                    mAppPreferencesLiveData.postValue(appPreferences);
+                    return mNoteRepository.observeList(appPreferences.workingDir);
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        listLiveData::postValue,
+                        error -> mToastDisplay.showLong(error.getMessage())
+                );
+        disposeLater(appPreferencesDisposable);
     }
 
     @Override
@@ -127,19 +125,13 @@ public class ListViewModel extends BaseViewModel {
                 AppCompatDelegate.getDefaultNightMode()
         ));
         final AppPreferences appPreferencesCopy = appPreferencesCopyBuilder.build();
-        disposeLater(
-                mAppPreferencesRepository.saveAppPreferences(appPreferencesCopy)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                success -> {
-                                    if (success) {
-                                        AppCompatDelegate
-                                                .setDefaultNightMode(appPreferencesCopy.nightMode);
-                                    }
-                                },
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
-        );
+        Disposable appPreferencesDisposable = mAppPreferencesRepository.save(appPreferencesCopy)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> AppCompatDelegate.setDefaultNightMode(appPreferencesCopy.nightMode),
+                        error -> mToastDisplay.showLong(error.getMessage())
+                );
+        disposeLater(appPreferencesDisposable);
     }
 
     protected void displayAboutApp(Context context) {
@@ -167,43 +159,37 @@ public class ListViewModel extends BaseViewModel {
 
     private void createNote(String noteName) {
         if (mAppPreferencesLiveData.getValue() == null) return;
-        disposeLater(
-                mNoteRepository.getNote(
-                                noteName,
-                                mAppPreferencesLiveData.getValue().workingDir
-                        )
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .flatMap((Function<Note, SingleSource<Boolean>>) note -> {
-                            if (note.exists()) {
-                                mToastDisplay.showShort(R.string.note_same_name_exists);
-                                return Single.just(false);
-                            } else {
-                                return mNoteRepository.saveNote(note);
-                            }
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                success -> {
-                                    if (success) {
-                                        mNavigator.navigate(Route.LIST_TO_EDITOR, noteName);
-                                    }
-                                },
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
-        );
+        Disposable getNoteDisposable = mNoteRepository.get(
+                        noteName,
+                        mAppPreferencesLiveData.getValue().workingDir
+                )
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMapCompletable((Function<Note, Completable>) note -> {
+                    if (note.exists()) {
+                        mToastDisplay.showShort(R.string.note_same_name_exists);
+                        return Completable.complete();
+                    } else {
+                        mNavigator.navigate(Route.LIST_TO_EDITOR, noteName);
+                        return mNoteRepository.save(note);
+                    }
+                })
+                .doOnError(error -> mToastDisplay.showLong(error.getMessage()))
+                .onErrorComplete()
+                .subscribe();
+        disposeLater(getNoteDisposable);
     }
 
     private void deleteNote(String noteName) {
         if (mAppPreferencesLiveData.getValue() == null) return;
         disposeLater(
-                mNoteRepository.getNote(
+                mNoteRepository.get(
                                 noteName,
                                 mAppPreferencesLiveData.getValue().workingDir
                         )
-                        .flatMap((Function<Note, SingleSource<Boolean>>) mNoteRepository::deleteNote)
+                        .flatMapCompletable((Function<Note, Completable>) mNoteRepository::delete)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                success -> mToastDisplay.showShort(R.string.note_deleted),
+                                () -> mToastDisplay.showShort(R.string.note_deleted),
                                 error -> mToastDisplay.showLong(error.getMessage())
                         )
         );

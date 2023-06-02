@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.view.View;
 
-import androidx.lifecycle.MutableLiveData;
-
 import com.rustamft.notesft.domain.model.AppPreferences;
 import com.rustamft.notesft.domain.repository.AppPreferencesRepository;
 import com.rustamft.notesft.presentation.base.BaseViewModel;
@@ -16,8 +14,10 @@ import com.rustamft.notesft.presentation.toast.ToastDisplay;
 
 import javax.inject.Inject;
 
+import androidx.lifecycle.MutableLiveData;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 @HiltViewModel
 public class PermissionViewModel extends BaseViewModel {
@@ -34,7 +34,7 @@ public class PermissionViewModel extends BaseViewModel {
         mToastDisplay = toastDisplay;
         mNavigator = navigator;
         disposeLater(
-                mAppPreferencesRepository.getAppPreferences().subscribe(mAppPreferences::postValue)
+                mAppPreferencesRepository.observe().subscribe(mAppPreferences::postValue)
         );
     }
 
@@ -46,23 +46,17 @@ public class PermissionViewModel extends BaseViewModel {
         AppPreferences.CopyBuilder appPreferencesCopyBuilder =
                 mAppPreferences.getValue().copyBuilder();
         appPreferencesCopyBuilder.setWorkingDir(workingDirUri.toString());
-        disposeLater(
-                mAppPreferencesRepository.saveAppPreferences(
-                                appPreferencesCopyBuilder.build()
-                        )
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                success -> {
-                                    if (success) mNavigator.navigate(Route.PERMISSION_TO_LIST);
-                                },
-                                error -> mToastDisplay.showLong(error.getMessage())
-                        )
-        );
+        Disposable saveAppPreferencesDisposable = mAppPreferencesRepository.save(appPreferencesCopyBuilder.build())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> mNavigator.navigate(Route.PERMISSION_TO_LIST),
+                        error -> mToastDisplay.showLong(error.getMessage())
+                );
+        disposeLater(saveAppPreferencesDisposable);
     }
 
     private void persistWorkingDirPermission(Uri workingDirUri, Context context) {
-        final int flags =
-                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        final int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
         context.getContentResolver().takePersistableUriPermission(workingDirUri, flags);
     }
 }

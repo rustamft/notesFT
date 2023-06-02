@@ -6,8 +6,6 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import com.rustamft.notesft.data.model.NoteDataModel;
 import com.rustamft.notesft.data.storage.NoteStorage;
 
@@ -23,6 +21,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import androidx.documentfile.provider.DocumentFile;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 
@@ -35,47 +35,31 @@ public class NoteDiskStorage implements NoteStorage {
     }
 
     @Override
-    public Single<Boolean> save(NoteDataModel note) {
-        return Single.create(emitter -> {
-                    if (!emitter.isDisposed()) {
-                        if (note.file().exists()) {
-                            emitter.onSuccess(writeIntoExisting(note));
-                        } else {
-                            emitter.onSuccess(writeIntoNew(note));
-                        }
-                    }
-                }
-        );
-    }
-
-    @Override
-    public Single<Boolean> delete(NoteDataModel note) {
-        return Single.create(emitter -> {
-            DocumentFile file = note.file();
-            if (!emitter.isDisposed()) {
-                if (file != null) {
-                    emitter.onSuccess(file.delete());
-                } else {
-                    emitter.onError(new IOException("File is null"));
-                }
+    public Completable save(NoteDataModel note) {
+        return Completable.fromCallable(() -> {
+            if (note.file().exists()) {
+                return writeIntoExisting(note);
+            } else {
+                return writeIntoNew(note);
             }
         });
     }
 
     @Override
+    public Completable delete(NoteDataModel note) {
+        return Completable.fromCallable(() -> note.file().delete());
+    }
+
+    @Override
     public Single<NoteDataModel> rename(NoteDataModel note, String newName) {
-        return Single.create(emitter -> {
+        return Single.fromCallable(() -> {
             DocumentFile oldNameFile = note.file();
             DocumentFile newNameFile = buildDocumentFile( // Create a virtual file with entered name
                     note.workingDir,
                     newName
             );
-            if (!emitter.isDisposed() && (newNameFile == null || newNameFile.exists())) {
-                emitter.onError(
-                        new FileNotFoundException(
-                                "New file already exists or couldn't be instantiated"
-                        )
-                );
+            if (newNameFile == null || newNameFile.exists()) {
+                throw new FileNotFoundException("New file already exists or couldn't be instantiated");
             }
             Uri renamedFileUri = DocumentsContract.renameDocument(
                     mContext.getContentResolver(),
@@ -86,29 +70,21 @@ public class NoteDiskStorage implements NoteStorage {
                     mContext,
                     renamedFileUri
             );
-            if (!emitter.isDisposed() && (newNameFile == null || !newNameFile.exists())) {
-                emitter.onError(
-                        new FileNotFoundException(
-                                "Renamed file is absent or couldn't be instantiated"
-                        )
-                );
+            if (newNameFile == null || !newNameFile.exists()) {
+                throw new FileNotFoundException("Renamed file is absent or couldn't be instantiated");
             }
-            if (!emitter.isDisposed()) {
-                emitter.onSuccess(
-                        new NoteDataModel(
-                                newName,
-                                note.text,
-                                note.workingDir,
-                                newNameFile
-                        )
-                );
-            }
+            return new NoteDataModel(
+                    newName,
+                    note.text,
+                    note.workingDir,
+                    newNameFile
+            );
         });
     }
 
     @Override
     public Single<NoteDataModel> get(String noteName, String workingDir) {
-        return Single.create(emitter -> {
+        return Single.fromCallable(() -> {
             DocumentFile file = buildDocumentFile(workingDir, noteName);
             String text;
             if (file.exists()) {
@@ -116,32 +92,20 @@ public class NoteDiskStorage implements NoteStorage {
             } else {
                 text = "";
             }
-            if (!emitter.isDisposed()) {
-                emitter.onSuccess(
-                        new NoteDataModel(
-                                noteName,
-                                text,
-                                workingDir,
-                                file
-                        )
-                );
-            }
+            return new NoteDataModel(
+                    noteName,
+                    text,
+                    workingDir,
+                    file
+            );
         });
     }
 
     @Override
-    public Observable<List<String>> getNameList(String workingDir) {
-        final List<String> nameList = new ArrayList<>();
-        return Observable.interval(0, 2, TimeUnit.SECONDS).flatMap(aLong -> {
-            List<String> newNameList = buildNameList(workingDir);
-            if (newNameList.equals(nameList)) {
-                return Observable.empty();
-            } else {
-                nameList.clear();
-                nameList.addAll(newNameList);
-                return Observable.just(newNameList);
-            }
-        });
+    public Observable<List<String>> observeNameList(String workingDir) {
+        return Observable.interval(0, 2, TimeUnit.SECONDS)
+                .map(aLong -> buildNameList(workingDir))
+                .distinctUntilChanged();
     }
 
     private DocumentFile buildDocumentFile(String workingDir, String name) {
